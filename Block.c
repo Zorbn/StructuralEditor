@@ -1,7 +1,11 @@
 #include "Block.h"
 
+#define _CRTDBG_MAP_ALLOC
 #include <stdlib.h>
+#include <crtdbg.h>
+
 #include <stdio.h>
+#include <string.h>
 
 const BlockKind BlockKinds[] = {
     [BlockKindIdPin] = {
@@ -270,14 +274,31 @@ void BlockReplaceChild(Block *block, Block *child, int64_t i)
     block->children[i] = child;
 }
 
-int32_t BlockCountAll(Block *block)
+uint64_t BlockCountAll(Block *block)
 {
-    int32_t count = 1;
+    uint64_t count = 1;
 
-    for (int64_t i = 0; i < block->childrenCount; i++)
+     for (int64_t i = 0; i < block->childrenCount; i++)
     {
         count += BlockCountAll(block->children[i]);
     }
 
     return count;
+}
+
+uint64_t BlockSizeAll(Block *block)
+{
+    uint64_t size = sizeof(Block) + sizeof(Block*) * block->childrenCapacity;
+
+    if (block->text)
+    {
+        size += strlen(block->text) + 1;
+    }
+
+    for (int64_t i = 0; i < block->childrenCount; i++)
+    {
+        size += BlockSizeAll(block->children[i]);
+    }
+
+    return size;
 }

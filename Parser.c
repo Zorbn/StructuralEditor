@@ -120,11 +120,11 @@ Block *ParserParseIf(Parser *parser, Block *parent)
 {
     Block *ifBlock = BlockNew(BlockKindIdIf, parent);
 
-    ifBlock->children[0] = ParserParseIfCases(parser, ifBlock);
+    BlockReplaceChild(ifBlock, ParserParseIfCases(parser, ifBlock), 0);
 
     if (ParserHas(parser, "else"))
     {
-        ifBlock->children[1] = ParserParseElseCase(parser, ifBlock);
+        BlockReplaceChild(ifBlock, ParserParseElseCase(parser, ifBlock), 1);
     }
     else
     {

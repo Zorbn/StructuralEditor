@@ -1,3 +1,7 @@
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+
 #include "Font.h"
 #include "Parser.h"
 #include "Block.h"
@@ -60,7 +64,9 @@ int main(void)
     Parser parser = ParserNew(LexerNew(data, dataCount));
     Block *rootBlock = ParserParseStatement(&parser, NULL);
 
-    printf("Block count: %d\n", BlockCountAll(rootBlock));
+    printf("Block count: %llu\n", BlockCountAll(rootBlock));
+    printf("Block size all: %llu\n", BlockSizeAll(rootBlock));
+    printf("Block size individual: %zd\n", sizeof(Block));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -93,8 +99,11 @@ int main(void)
 
     BlockDelete(rootBlock);
     FontDelete(font);
+    free(data);
 
     sgp_shutdown();
     sg_shutdown();
     glfwTerminate();
+
+    printf("Has memory leaks?: %d\n", _CrtDumpMemoryLeaks());
 }

@@ -74,4 +74,5 @@ typedef struct Block
 Block *BlockNew(BlockKindId kindId, Block *parent);
 void BlockDelete(Block *block);
 void BlockReplaceChild(Block *block, Block *child, int64_t i);
-int32_t BlockCountAll(Block *block);
+uint64_t BlockCountAll(Block *block);
+uint64_t BlockSizeAll(Block *block);
