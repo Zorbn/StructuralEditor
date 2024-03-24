@@ -1,23 +1,25 @@
 #pragma once
 
 #include <inttypes.h>
+#include <stdbool.h>
 
-struct Token
+typedef struct Token
 {
-    uint64_t start;
-    uint64_t end;
-};
+    int32_t start;
+    int32_t end;
+} Token;
 
-struct Lexer
+typedef struct Lexer
 {
     char *data;
-    uint64_t dataCount;
-    struct Token current;
-    uint64_t position;
-};
+    int32_t dataCount;
+    Token current;
+    int32_t position;
+} Lexer;
 
-struct Lexer LexerNew(char *data, uint64_t dataCount);
-char LexerChar(const struct Lexer *lexer);
-struct Token LexerPeek(const struct Lexer *lexer);
-struct Token LexerNext(struct Lexer *lexer);
-struct Token LexerRead(struct Lexer *lexer);
+Lexer LexerNew(char *data, int32_t dataCount);
+char LexerChar(const Lexer *lexer);
+Token LexerPeek(const Lexer *lexer);
+Token LexerNext(Lexer *lexer);
+Token LexerRead(Lexer *lexer);
+bool LexerTokenEquals(Lexer *lexer, Token token, char *string);

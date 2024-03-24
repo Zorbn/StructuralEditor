@@ -1,4 +1,6 @@
 #include "Font.h"
+#include "Parser.h"
+#include "Block.h"
 
 #define SOKOL_GLCORE33
 #include <sokol_gfx.h>
@@ -36,7 +38,29 @@ int main(void)
     sgp_setup(&sokolGpDescriptor);
     assert(sgp_is_valid());
 
-    struct Font *font = FontNew("DejaVuSans.ttf", 16);
+    Font *font = FontNew("DejaVuSans.ttf", 16);
+
+    char *data = NULL;
+    int32_t dataCount = 0;
+    {
+        FILE *file = fopen("save.lua", "r");
+
+        fseek(file, 0, SEEK_END);
+        dataCount = ftell(file);
+        fseek(file, 0, SEEK_SET);
+
+        data = malloc(dataCount + 1);
+
+        fread(data, dataCount, 1, file);
+        fclose(file);
+
+        data[dataCount] = '\0';
+    }
+
+    Parser parser = ParserNew(LexerNew(data, dataCount));
+    Block *rootBlock = ParserParseStatement(&parser, NULL);
+
+    printf("Block count: %d\n", BlockCountAll(rootBlock));
 
     while (!glfwWindowShouldClose(window))
     {
@@ -67,6 +91,7 @@ int main(void)
         glfwPollEvents();
     }
 
+    BlockDelete(rootBlock);
     FontDelete(font);
 
     sgp_shutdown();

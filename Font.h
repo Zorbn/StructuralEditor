@@ -1,8 +1,8 @@
 #pragma once
 
-struct Font;
+typedef struct Font Font;
 
-struct Font *FontNew(const char *path, float size);
-int FontDelete(struct Font *font);
-int DrawText(const char *text, float x, float y, struct Font *font);
-int GetTextSize(const char *text, int *width, int *height, struct Font *font);
+Font *FontNew(const char *path, float size);
+int FontDelete(Font *font);
+int DrawText(const char *text, float x, float y, Font *font);
+int GetTextSize(const char *text, int *width, int *height, Font *font);

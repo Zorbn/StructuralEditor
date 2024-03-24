@@ -1,4 +1,4 @@
-#define _CRT_SECURE_NO_WARNINGS
+#include "Font.h"
 
 #define SOKOL_GLCORE33
 #include <sokol_gfx.h>
@@ -28,7 +28,7 @@
 int fonsAddFontMem(FONScontext* stash, const char* name, unsigned char* data, int dataSize, int freeData);
 
 // Font handling ported from Lyte2D.
-struct Font
+typedef struct Font
 {
     FONScontext *context;
     void *data;
@@ -40,11 +40,11 @@ struct Font
     int id;
     int atlasDimensions;
     float size;
-};
+} Font;
 
 static int FontStashRenderCreate(void *user, int width, int height)
 {
-    struct Font *font = (struct Font *)user;
+    Font *font = (Font *)user;
     font->width = width;
     font->height = height;
 
@@ -69,7 +69,7 @@ static int FontStashRenderCreate(void *user, int width, int height)
 
 static void FontStashRenderDelete(void *user)
 {
-    struct Font *font = (struct Font *)user;
+    Font *font = (Font *)user;
     sg_destroy_image(font->image);
     sg_destroy_sampler(font->sampler);
     font->image = (sg_image){0};
@@ -85,7 +85,7 @@ static int FontStashRenderResize(void *user, int width, int height)
 
 static void FontStashRenderUpdate(void *user, int *rectangle, const uint8_t *data)
 {
-    struct Font *font = (struct Font *)user;
+    Font *font = (Font *)user;
     int width = font->width;
     int height = font->height;
 
@@ -114,7 +114,7 @@ static void FontStashRenderUpdate(void *user, int *rectangle, const uint8_t *dat
 
 static void FontStashRenderDraw(void *user, const float *vertices, const float *uvs, const uint32_t *colors, int vertexCount)
 {
-    struct Font *font = (struct Font *)user;
+    Font *font = (Font *)user;
 
     int width = font->width;
     int height = font->height;
@@ -151,7 +151,7 @@ static void FontStashRenderDraw(void *user, const float *vertices, const float *
     sgp_reset_image(0);
 }
 
-struct Font *FontNew(const char *path, float size)
+Font *FontNew(const char *path, float size)
 {
     FILE *file = fopen(path, "rb");
     fseek(file, 0, SEEK_END);
@@ -161,8 +161,8 @@ struct Font *FontNew(const char *path, float size)
     fread(data, fileSize, 1, file);
     fclose(file);
 
-    struct Font *font = malloc(sizeof(struct Font));
-    *font = (struct Font){
+    Font *font = malloc(sizeof(Font));
+    *font = (Font){
         .atlasDimensions = FONT_ATLAS_SIZE,
         .size = size,
         .data = data,
@@ -185,7 +185,7 @@ struct Font *FontNew(const char *path, float size)
     return font;
 }
 
-int FontDelete(struct Font *font)
+int FontDelete(Font *font)
 {
     if (!font)
     {
@@ -199,7 +199,7 @@ int FontDelete(struct Font *font)
     return 0;
 }
 
-int DrawText(const char *text, float x, float y, struct Font *font)
+int DrawText(const char *text, float x, float y, Font *font)
 {
     if (!font)
     {
@@ -225,7 +225,7 @@ int DrawText(const char *text, float x, float y, struct Font *font)
     return 0;
 }
 
-int GetTextSize(const char *text, int *width, int *height, struct Font *font)
+int GetTextSize(const char *text, int *width, int *height, Font *font)
 {
     if (font->id == FONS_INVALID)
     {

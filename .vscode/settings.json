@@ -5,6 +5,8 @@
         "*.gui_script": "lua",
         "*.render_script": "lua",
         "*.editor_script": "lua",
-        "stdbool.h": "c"
+        "stdbool.h": "c",
+        "stdlib.h": "c",
+        "*.h": "c"
     }
 }
