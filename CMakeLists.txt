@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 include(CTest)
 enable_testing()
 
-add_executable(StructuralEditor Main.c Implementations.c Font.c)
+add_executable(StructuralEditor Main.c Implementations.c Font.c Lexer.c)
 
 set(GLFW_BUILD_EXAMPLES OFF)
 set(GLFW_BUILD_TESTS OFF)

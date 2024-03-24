@@ -1,3 +1,10 @@
 {
-    "dotnet.defaultSolution": "disable"
+    "dotnet.defaultSolution": "disable",
+    "files.associations": {
+        "*.script": "lua",
+        "*.gui_script": "lua",
+        "*.render_script": "lua",
+        "*.editor_script": "lua",
+        "stdbool.h": "c"
+    }
 }
