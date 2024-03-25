@@ -13,7 +13,7 @@ typedef enum PinKind
 
 typedef enum BlockKindId
 {
-    BlockKindIdPin = 0,
+    BlockKindIdPin,
     BlockKindIdDo,
     BlockKindIdStatementList,
     BlockKindIdFunctionHeader,

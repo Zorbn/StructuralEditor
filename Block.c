@@ -8,6 +8,18 @@
 #include <string.h>
 #include <assert.h>
 
+#define NewChild(childBlockKindId)       \
+    {                                    \
+        .blockKindId = childBlockKindId, \
+        .isPin = false,                  \
+    }
+
+#define NewChildPin(childPinKind) \
+    {                             \
+        .pinKind = childPinKind,  \
+        .isPin = true,            \
+    }
+
 const BlockKind BlockKinds[] = {
     [BlockKindIdPin] = {
         .pinKind = PinKindNone,
@@ -20,10 +32,7 @@ const BlockKind BlockKinds[] = {
         .isVertical = true,
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindStatement,
-            },
+            NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 1,
     },
@@ -33,10 +42,7 @@ const BlockKind BlockKinds[] = {
         .isVertical = true,
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindStatement,
-            },
+            NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 1,
     },
@@ -45,14 +51,8 @@ const BlockKind BlockKinds[] = {
         .text = "fn",
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindIdentifier,
-            },
-            {
-                .isPin = true,
-                .pinKind = PinKindIdentifier,
-            },
+            NewChildPin(PinKindIdentifier),
+            NewChildPin(PinKindIdentifier),
         },
         .defaultChildrenCount = 2,
     },
@@ -61,12 +61,8 @@ const BlockKind BlockKinds[] = {
         .searchText = "fn",
         .isVertical = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .blockKindId = BlockKindIdFunctionHeader,
-            },
-            {
-                .blockKindId = BlockKindIdStatementList,
-            },
+            NewChild(BlockKindIdFunctionHeader),
+            NewChild(BlockKindIdStatementList),
         },
         .defaultChildrenCount = 2,
     },
@@ -75,10 +71,7 @@ const BlockKind BlockKinds[] = {
         .text = "fn",
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindIdentifier,
-            },
+            NewChildPin(PinKindIdentifier),
         },
         .defaultChildrenCount = 1,
     },
@@ -87,12 +80,8 @@ const BlockKind BlockKinds[] = {
         .searchText = "fn",
         .isVertical = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .blockKindId = BlockKindIdLambdaFunctionHeader,
-            },
-            {
-                .blockKindId = BlockKindIdStatementList,
-            },
+            NewChild(BlockKindIdLambdaFunctionHeader),
+            NewChild(BlockKindIdStatementList),
         },
         .defaultChildrenCount = 2,
     },
@@ -102,14 +91,8 @@ const BlockKind BlockKinds[] = {
         .isVertical = true,
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
-            {
-                .isPin = true,
-                .pinKind = PinKindStatement,
-            },
+            NewChildPin(PinKindExpression),
+            NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 2,
     },
@@ -119,9 +102,7 @@ const BlockKind BlockKinds[] = {
         .isVertical = true,
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .blockKindId = BlockKindIdCase,
-            },
+            NewChild(BlockKindIdCase),
         },
         .defaultChildrenCount = 1,
     },
@@ -131,10 +112,7 @@ const BlockKind BlockKinds[] = {
         .isVertical = true,
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindStatement,
-            },
+            NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 1,
     },
@@ -143,12 +121,8 @@ const BlockKind BlockKinds[] = {
         .searchText = "if",
         .isVertical = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .blockKindId = BlockKindIdIfCases,
-            },
-            {
-                .blockKindId = BlockKindIdElseCase,
-            },
+            NewChild(BlockKindIdIfCases),
+            NewChild(BlockKindIdElseCase),
         },
         .defaultChildrenCount = 2,
     },
@@ -158,14 +132,8 @@ const BlockKind BlockKinds[] = {
         .text = "=",
         .isTextInfix = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
+            NewChildPin(PinKindExpression),
+            NewChildPin(PinKindExpression),
         },
         .defaultChildrenCount = 2,
     },
@@ -176,18 +144,9 @@ const BlockKind BlockKinds[] = {
         .isTextInfix = true,
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
+            NewChildPin(PinKindExpression),
+            NewChildPin(PinKindExpression),
+            NewChildPin(PinKindExpression),
         },
         .defaultChildrenCount = 3,
     },
@@ -197,14 +156,8 @@ const BlockKind BlockKinds[] = {
         .text = "call",
         .isGrowable = true,
         .defaultChildren = (DefaultChildKind[]){
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
-            {
-                .isPin = true,
-                .pinKind = PinKindExpression,
-            },
+            NewChildPin(PinKindExpression),
+            NewChildPin(PinKindExpression),
         },
         .defaultChildrenCount = 2,
     },
@@ -292,7 +245,7 @@ uint64_t BlockCountAll(Block *block)
 
 uint64_t BlockSizeAll(Block *block)
 {
-    uint64_t size = sizeof(Block) + sizeof(Block*) * block->childrenCapacity;
+    uint64_t size = sizeof(Block) + sizeof(Block *) * block->childrenCapacity;
 
     if (block->text)
     {
