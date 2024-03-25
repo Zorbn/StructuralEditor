@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 const BlockKind BlockKinds[] = {
     [BlockKindIdPin] = {
@@ -216,25 +217,28 @@ const BlockKind BlockKinds[] = {
 
 Block *BlockNew(BlockKindId kindId, Block *parent)
 {
-    Block *block = malloc(sizeof(Block));
+    const BlockKind *kind = &BlockKinds[kindId];
+
+    Block *block = malloc(sizeof(Block) + sizeof(Block *) * kind->defaultChildrenCount);
+    assert(block);
+
     *block = (Block){
         .kindId = kindId,
         .parent = parent,
-        .children = NULL,
+        .childrenCapacity = kind->defaultChildrenCount,
+        .childrenCount = kind->defaultChildrenCount,
     };
 
-    const BlockKind *kind = &BlockKinds[kindId];
-    if (kind->defaultChildrenCount > 0)
+    for (int64_t i = 0; i < kind->defaultChildrenCount; i++)
     {
-        block->children = malloc(sizeof(Block *) * kind->defaultChildrenCount);
-        block->childrenCapacity = kind->defaultChildrenCount;
-
-        for (int64_t i = 0; i < kind->defaultChildrenCount; i++)
+        if (kind->defaultChildren[i].isPin)
+        {
+            block->children[i] = BlockNew(BlockKindIdPin, block);
+        }
+        else
         {
             block->children[i] = BlockNew(kind->defaultChildren[i].blockKindId, block);
         }
-
-        block->childrenCount = kind->defaultChildrenCount;
     }
 
     return block;
@@ -247,38 +251,38 @@ void BlockDelete(Block *block)
         BlockDelete(block->children[i]);
     }
 
-    free(block->children);
     free(block->text);
     free(block);
 }
 
 // Frees the old child if it exists, expands this block's children array as necessary.
-void BlockReplaceChild(Block *block, Block *child, int64_t i)
+void BlockReplaceChild(Block **block, Block *child, int64_t i)
 {
-    if (i >= block->childrenCount)
+    if (i >= (*block)->childrenCount)
     {
-        if (i >= block->childrenCapacity)
+        if (i >= (*block)->childrenCapacity)
         {
-            block->childrenCapacity *= 2;
-            block->children = realloc(block->children, sizeof(Block *) * block->childrenCapacity);
+            (*block)->childrenCapacity *= 2;
+            *block = realloc(*block, sizeof(Block) + sizeof(Block *) * (*block)->childrenCapacity);
+            assert(*block);
         }
 
-        i = block->childrenCount;
-        block->childrenCount++;
+        i = (*block)->childrenCount;
+        (*block)->childrenCount++;
     }
     else
     {
-        BlockDelete(block->children[i]);
+        BlockDelete((*block)->children[i]);
     }
 
-    block->children[i] = child;
+    (*block)->children[i] = child;
 }
 
 uint64_t BlockCountAll(Block *block)
 {
     uint64_t count = 1;
 
-     for (int64_t i = 0; i < block->childrenCount; i++)
+    for (int64_t i = 0; i < block->childrenCount; i++)
     {
         count += BlockCountAll(block->children[i]);
     }

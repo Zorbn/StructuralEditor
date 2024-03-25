@@ -42,8 +42,6 @@ int main(void)
     sgp_setup(&sokolGpDescriptor);
     assert(sgp_is_valid());
 
-    Font *font = FontNew("DejaVuSans.ttf", 16);
-
     char *data = NULL;
     int32_t dataCount = 0;
     {
@@ -67,6 +65,9 @@ int main(void)
     printf("Block count: %llu\n", BlockCountAll(rootBlock));
     printf("Block size all: %llu\n", BlockSizeAll(rootBlock));
     printf("Block size individual: %zd\n", sizeof(Block));
+    printf("Block kind size: %zd\n", sizeof(BlockKindId));
+
+    Font *font = FontNew("DejaVuSans.ttf", 16);
 
     while (!glfwWindowShouldClose(window))
     {

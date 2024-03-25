@@ -12,7 +12,7 @@ Parser ParserNew(Lexer lexer);
 
 void ParserMatch(Parser *parser, char *string);
 bool ParserHas(Parser *parser, char *string);
-void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *parser, Block *parent), int32_t startI, char *end, char *separator);
+void ParserList(Parser *parser, Block **parent, Block *(*ParserFunction)(Parser *parser, Block *parent), int32_t startI, char *end, char *separator);
 
 Block *ParserParseDo(Parser *parser, Block *parent);
 Block *ParserParseCase(Parser *parser, Block *parent);

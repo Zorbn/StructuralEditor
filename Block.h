@@ -54,7 +54,6 @@ const BlockKind BlockKinds[];
 typedef struct Block
 {
     struct Block *parent;
-    struct Block **children;
     char *text;
 
     int32_t childrenCount;
@@ -65,14 +64,16 @@ typedef struct Block
     int32_t width;
     int32_t height;
 
-    int32_t textWidth;
-    int32_t textHeight;
+    int16_t textWidth;
+    int16_t textHeight;
 
     BlockKindId kindId;
+
+    struct Block *children[];
 } Block;
 
 Block *BlockNew(BlockKindId kindId, Block *parent);
 void BlockDelete(Block *block);
-void BlockReplaceChild(Block *block, Block *child, int64_t i);
+void BlockReplaceChild(Block **block, Block *child, int64_t i);
 uint64_t BlockCountAll(Block *block);
 uint64_t BlockSizeAll(Block *block);

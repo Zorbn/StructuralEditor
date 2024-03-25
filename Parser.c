@@ -28,7 +28,7 @@ bool ParserHas(Parser *parser, char *string)
     return LexerTokenEquals(&parser->lexer, parser->lexer.current, string);
 }
 
-void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *parser, Block *parent), int32_t startI, char *end, char *separator)
+void ParserList(Parser *parser, Block **parent, Block *(*ParserFunction)(Parser *parser, Block *parent), int32_t startI, char *end, char *separator)
 {
     int32_t i = startI;
 
@@ -39,7 +39,7 @@ void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *
             ParserMatch(parser, separator);
         }
 
-        BlockReplaceChild(parent, ParserFunction(parser, parent), i);
+        BlockReplaceChild(parent, ParserFunction(parser, *parent), i);
         i += 1;
     }
 
@@ -58,7 +58,7 @@ Block *ParserParseDo(Parser *parser, Block *parent)
     while (!ParserHas(parser, "end"))
     {
         Block *statement = ParserParseStatement(parser, doBlock);
-        BlockReplaceChild(doBlock, statement, childI);
+        BlockReplaceChild(&doBlock, statement, childI);
         childI += 1;
     }
 
@@ -69,13 +69,13 @@ Block *ParserParseCase(Parser *parser, Block *parent)
 {
     Block *caseBlock = BlockNew(BlockKindIdCase, parent);
     Block *condition = ParserParseExpression(parser, caseBlock);
-    BlockReplaceChild(caseBlock, condition, 1);
+    BlockReplaceChild(&caseBlock, condition, 1);
     ParserMatch(parser, "then");
 
     int32_t i = 1;
     while (!ParserHas(parser, "elseif") && !ParserHas(parser, "else") && !ParserHas(parser, "end"))
     {
-        BlockReplaceChild(caseBlock, ParserParseStatement(parser, caseBlock), i);
+        BlockReplaceChild(&caseBlock, ParserParseStatement(parser, caseBlock), i);
         i += 1;
     }
 
@@ -98,7 +98,7 @@ Block *ParserParseIfCases(Parser *parser, Block *parent)
             ParserMatch(parser, "elseif");
         }
 
-        BlockReplaceChild(ifCases, ParserParseCase(parser, ifCases), i);
+        BlockReplaceChild(&ifCases, ParserParseCase(parser, ifCases), i);
         i += 1;
     }
 
@@ -111,7 +111,7 @@ Block *ParserParseElseCase(Parser *parser, Block *parent)
 
     Block *elseCase = BlockNew(BlockKindIdElseCase, parent);
 
-    ParserList(parser, elseCase, ParserParseStatement, 0, "end", NULL);
+    ParserList(parser, &elseCase, ParserParseStatement, 0, "end", NULL);
 
     return elseCase;
 }
@@ -120,11 +120,11 @@ Block *ParserParseIf(Parser *parser, Block *parent)
 {
     Block *ifBlock = BlockNew(BlockKindIdIf, parent);
 
-    BlockReplaceChild(ifBlock, ParserParseIfCases(parser, ifBlock), 0);
+    BlockReplaceChild(&ifBlock, ParserParseIfCases(parser, ifBlock), 0);
 
     if (ParserHas(parser, "else"))
     {
-        BlockReplaceChild(ifBlock, ParserParseElseCase(parser, ifBlock), 1);
+        BlockReplaceChild(&ifBlock, ParserParseElseCase(parser, ifBlock), 1);
     }
     else
     {
@@ -138,7 +138,7 @@ Block *ParserParseStatementList(Parser *parser, Block *parent)
 {
     Block *statementList = BlockNew(BlockKindIdStatementList, parent);
 
-    ParserList(parser, statementList, ParserParseStatement, 0, "end", NULL);
+    ParserList(parser, &statementList, ParserParseStatement, 0, "end", NULL);
 
     return statementList;
 }
@@ -149,10 +149,10 @@ Block *ParserParseFunctionHeader(Parser *parser, Block *parent)
 
     ParserMatch(parser, "function");
 
-    BlockReplaceChild(functionHeader, ParserParseIdentifier(parser, parent), 0);
+    BlockReplaceChild(&functionHeader, ParserParseIdentifier(parser, parent), 0);
 
     ParserMatch(parser, "(");
-    ParserList(parser, functionHeader, ParserParseIdentifier, 1, ")", ",");
+    ParserList(parser, &functionHeader, ParserParseIdentifier, 1, ")", ",");
 
     return functionHeader;
 }
@@ -161,8 +161,8 @@ Block *ParserParseFunction(Parser *parser, Block *parent)
 {
     Block *functionBlock = BlockNew(BlockKindIdFunction, parent);
 
-    BlockReplaceChild(functionBlock, ParserParseFunctionHeader(parser, functionBlock), 0);
-    BlockReplaceChild(functionBlock, ParserParseStatementList(parser, functionBlock), 1);
+    BlockReplaceChild(&functionBlock, ParserParseFunctionHeader(parser, functionBlock), 0);
+    BlockReplaceChild(&functionBlock, ParserParseStatementList(parser, functionBlock), 1);
 
     return functionBlock;
 }
@@ -174,7 +174,7 @@ Block *ParserParseLambdaFunctionHeader(Parser *parser, Block *parent)
     ParserMatch(parser, "function");
 
     ParserMatch(parser, "(");
-    ParserList(parser, lambdaFunctionHeader, ParserParseIdentifier, 1, ")", ",");
+    ParserList(parser, &lambdaFunctionHeader, ParserParseIdentifier, 1, ")", ",");
 
     return lambdaFunctionHeader;
 }
@@ -183,8 +183,8 @@ Block *ParserParseLambdaFunction(Parser *parser, Block *parent)
 {
     Block *lambdaFunction = BlockNew(BlockKindIdLambdaFunction, parent);
 
-    BlockReplaceChild(lambdaFunction, ParserParseLambdaFunctionHeader(parser, lambdaFunction), 0);
-    BlockReplaceChild(lambdaFunction, ParserParseStatementList(parser, lambdaFunction), 1);
+    BlockReplaceChild(&lambdaFunction, ParserParseLambdaFunctionHeader(parser, lambdaFunction), 0);
+    BlockReplaceChild(&lambdaFunction, ParserParseStatementList(parser, lambdaFunction), 1);
 
     return lambdaFunction;
 }
@@ -200,7 +200,7 @@ Block *ParserParseAddition(Parser *parser, Block *parent)
 
     Block *add = BlockNew(BlockKindIdAdd, parent);
     left->parent = add;
-    BlockReplaceChild(add, left, 0);
+    BlockReplaceChild(&add, left, 0);
 
     int32_t childI = 1;
     while (ParserHas(parser, "+"))
@@ -208,7 +208,7 @@ Block *ParserParseAddition(Parser *parser, Block *parent)
         LexerNext(&parser->lexer);
 
         Block *expression = ParserParseUnarySuffix(parser, add);
-        BlockReplaceChild(add, expression, childI);
+        BlockReplaceChild(&add, expression, childI);
         childI += 1;
     }
 
@@ -226,13 +226,13 @@ Block *ParserParseUnarySuffix(Parser *parser, Block *parent)
 
         Block *call = BlockNew(BlockKindIdCall, parent);
         left->parent = call;
-        BlockReplaceChild(call, left, 0);
+        BlockReplaceChild(&call, left, 0);
 
         int32_t childI = 1;
         while (!ParserHas(parser, ")"))
         {
             Block *expression = ParserParseExpression(parser, call);
-            BlockReplaceChild(call, expression, childI);
+            BlockReplaceChild(&call, expression, childI);
             childI += 1;
 
             if (!ParserHas(parser, ","))
@@ -297,8 +297,8 @@ Block *ParserParseStatement(Parser *parser, Block *parent)
     Block *assignment = BlockNew(BlockKindIdAssignment, parent);
     expression->parent = assignment;
     Block *rightExpression = ParserParseExpression(parser, assignment);
-    BlockReplaceChild(assignment, expression, 0);
-    BlockReplaceChild(assignment, rightExpression, 1);
+    BlockReplaceChild(&assignment, expression, 0);
+    BlockReplaceChild(&assignment, rightExpression, 1);
 
     return assignment;
 }
