@@ -8,24 +8,45 @@
 #include <string.h>
 #include <assert.h>
 
-#define NewChild(childBlockKindId)       \
-    {                                    \
-        .blockKindId = childBlockKindId, \
-        .isPin = false,                  \
+DefaultChildKind NewChild(BlockKindId childBlockKindId)
+{
+    return (DefaultChildKind){
+        .blockKindId = childBlockKindId,
+        .isPin = false,
+    };
+}
+
+DefaultChildKind NewChildPin(PinKind childPinKind)
+{
+    return (DefaultChildKind){
+        .pinKind = childPinKind,
+        .isPin = true,
+    };
+}
+
+BlockKind BlockKindNew(BlockKind blockKind)
+{
+    DefaultChildKind *defaultChildren = malloc(sizeof(DefaultChildKind) * blockKind.defaultChildrenCount);
+
+    for (int32_t i = 0; i < blockKind.defaultChildrenCount; i++)
+    {
+        defaultChildren[i] = blockKind.defaultChildren[i];
     }
 
-#define NewChildPin(childPinKind) \
-    {                             \
-        .pinKind = childPinKind,  \
-        .isPin = true,            \
-    }
+    blockKind.defaultChildren = defaultChildren;
 
-const BlockKind BlockKinds[] = {
-    [BlockKindIdPin] = {
+    return blockKind;
+}
+
+BlockKind BlockKinds[BlockKindIdCount];
+
+void BlockKindsInit(void)
+{
+    BlockKinds[BlockKindIdPin] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = ".",
-    },
-    [BlockKindIdDo] = {
+    });
+    BlockKinds[BlockKindIdDo] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
         .searchText = "do",
         .text = "do",
@@ -35,8 +56,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 1,
-    },
-    [BlockKindIdStatementList] = {
+    });
+    BlockKinds[BlockKindIdStatementList] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = "",
         .isVertical = true,
@@ -45,8 +66,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 1,
-    },
-    [BlockKindIdFunctionHeader] = {
+    });
+    BlockKinds[BlockKindIdFunctionHeader] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = "fn",
         .isGrowable = true,
@@ -55,8 +76,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindIdentifier),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdFunction] = {
+    });
+    BlockKinds[BlockKindIdFunction] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
         .searchText = "fn",
         .isVertical = true,
@@ -65,8 +86,8 @@ const BlockKind BlockKinds[] = {
             NewChild(BlockKindIdStatementList),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdLambdaFunctionHeader] = {
+    });
+    BlockKinds[BlockKindIdLambdaFunctionHeader] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = "fn",
         .isGrowable = true,
@@ -74,8 +95,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindIdentifier),
         },
         .defaultChildrenCount = 1,
-    },
-    [BlockKindIdLambdaFunction] = {
+    });
+    BlockKinds[BlockKindIdLambdaFunction] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
         .searchText = "fn",
         .isVertical = true,
@@ -84,8 +105,8 @@ const BlockKind BlockKinds[] = {
             NewChild(BlockKindIdStatementList),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdCase] = {
+    });
+    BlockKinds[BlockKindIdCase] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = "case",
         .isVertical = true,
@@ -95,8 +116,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdIfCases] = {
+    });
+    BlockKinds[BlockKindIdIfCases] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = "if",
         .isVertical = true,
@@ -105,8 +126,8 @@ const BlockKind BlockKinds[] = {
             NewChild(BlockKindIdCase),
         },
         .defaultChildrenCount = 1,
-    },
-    [BlockKindIdElseCase] = {
+    });
+    BlockKinds[BlockKindIdElseCase] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = "else",
         .isVertical = true,
@@ -115,8 +136,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindStatement),
         },
         .defaultChildrenCount = 1,
-    },
-    [BlockKindIdIf] = {
+    });
+    BlockKinds[BlockKindIdIf] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
         .searchText = "if",
         .isVertical = true,
@@ -125,8 +146,8 @@ const BlockKind BlockKinds[] = {
             NewChild(BlockKindIdElseCase),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdAssignment] = {
+    });
+    BlockKinds[BlockKindIdAssignment] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
         .searchText = "=",
         .text = "=",
@@ -136,8 +157,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindExpression),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdAdd] = {
+    });
+    BlockKinds[BlockKindIdAdd] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
         .searchText = "+",
         .text = "+",
@@ -149,8 +170,8 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindExpression),
         },
         .defaultChildrenCount = 3,
-    },
-    [BlockKindIdCall] = {
+    });
+    BlockKinds[BlockKindIdCall] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
         .searchText = "call",
         .text = "call",
@@ -160,13 +181,21 @@ const BlockKind BlockKinds[] = {
             NewChildPin(PinKindExpression),
         },
         .defaultChildrenCount = 2,
-    },
-    [BlockKindIdIdentifier] = {
+    });
+    BlockKinds[BlockKindIdIdentifier] = BlockKindNew((BlockKind){
         .pinKind = PinKindIdentifier,
         .text = "",
         .defaultChildrenCount = 0,
-    },
-};
+    });
+}
+
+void BlockKindsDeinit(void)
+{
+    for (int32_t i = 0; i < BlockKindIdCount; i++)
+    {
+        free(BlockKinds[i].defaultChildren);
+    }
+}
 
 Block *BlockNew(BlockKindId kindId, Block *parent)
 {

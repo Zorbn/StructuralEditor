@@ -28,6 +28,8 @@ typedef enum BlockKindId
     BlockKindIdAdd,
     BlockKindIdCall,
     BlockKindIdIdentifier,
+
+    BlockKindIdCount,
 } BlockKindId;
 
 typedef struct DefaultChildKind
@@ -49,7 +51,7 @@ typedef struct BlockKind
     int32_t defaultChildrenCount;
 } BlockKind;
 
-const BlockKind BlockKinds[];
+BlockKind BlockKinds[BlockKindIdCount];
 
 typedef struct Block
 {
@@ -71,6 +73,9 @@ typedef struct Block
 
     struct Block *children[];
 } Block;
+
+void BlockKindsInit(void);
+void BlockKindsDeinit(void);
 
 Block *BlockNew(BlockKindId kindId, Block *parent);
 void BlockDelete(Block *block);

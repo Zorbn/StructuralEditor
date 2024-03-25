@@ -59,6 +59,8 @@ int main(void)
         data[dataCount] = '\0';
     }
 
+    BlockKindsInit();
+
     Parser parser = ParserNew(LexerNew(data, dataCount));
     Block *rootBlock = ParserParseStatement(&parser, NULL);
 
@@ -101,6 +103,8 @@ int main(void)
     BlockDelete(rootBlock);
     FontDelete(font);
     free(data);
+
+    BlockKindsDeinit();
 
     sgp_shutdown();
     sg_shutdown();
