@@ -1,3 +1,19 @@
+#define SGP_UNIFORM_CONTENT_SLOTS 1024
+#define SGP_TEXTURE_SLOTS 8
+
+#define SOKOL_IMPL
+#define SOKOL_GLCORE33
+#include <sokol_gfx.h>
+#include <sokol_log.h>
+
+#if defined(_MSC_VER)
+#pragma warning(disable : 4244)
+#endif
+#include "sokol_gp.h"
+
+#define GLFW_INCLUDE_NONE
+#include "GLFW/glfw3.h"
+
 #define FONTSTASH_IMPLEMENTATION
 #define FONS_USE_FREETYPE
 
@@ -14,16 +30,3 @@
 #if defined(__GNUC__) || defined(__clang__)
 #pragma GCC diagnostic pop
 #endif
-
-#define SOKOL_IMPL
-#define SOKOL_GLCORE33
-#include <sokol_gfx.h>
-#include <sokol_log.h>
-
-#if defined(_MSC_VER)
-#pragma warning(disable : 4244)
-#endif
-#include "sokol_gp.h"
-
-#define GLFW_INCLUDE_NONE
-#include "GLFW/glfw3.h"

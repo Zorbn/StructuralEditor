@@ -9,7 +9,6 @@
 
 #include "sokol_gp.h"
 
-#define FONS_USE_FREETYPE
 #include "fontstash.h"
 
 #ifndef FONT_ATLAS_SIZE

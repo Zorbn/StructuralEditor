@@ -2,18 +2,17 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 
-#include "Font.h"
-#include "Parser.h"
-#include "Block.h"
-
 #define SOKOL_GLCORE33
 #include <sokol_gfx.h>
 #include <sokol_log.h>
+#include <sokol_gp.h>
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
-#include "sokol_gp.h"
+#include "Font.h"
+#include "Parser.h"
+#include "Block.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -59,23 +58,25 @@ int main(void)
         data[dataCount] = '\0';
     }
 
-    BlockKindsInit();
+    Font *font = FontNew("DejaVuSans.ttf", 16);
+
+    BlockKindsInit(font);
 
     Parser parser = ParserNew(LexerNew(data, dataCount));
-    Block *rootBlock = ParserParseStatement(&parser, NULL);
+    Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
+    Block *cursorBlock = rootBlock->children[4]->children[1]->children[1];
 
     printf("Block count: %llu\n", BlockCountAll(rootBlock));
     printf("Block size all: %llu\n", BlockSizeAll(rootBlock));
     printf("Block size individual: %zd\n", sizeof(Block));
     printf("Block kind size: %zd\n", sizeof(BlockKindId));
 
-    Font *font = FontNew("DejaVuSans.ttf", 16);
+    List_DrawCommand drawCommands = ListNew_DrawCommand(64);
 
     while (!glfwWindowShouldClose(window))
     {
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
-        float ratio = width / (float)height;
 
         sgp_begin(width, height);
         sgp_viewport(0, 0, width, height);
@@ -87,7 +88,15 @@ int main(void)
         sgp_draw_filled_rect(0, 0, 100, 50);
 
         sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
-        DrawText("hello", 10, 0, font);
+        // DrawText("hello", 10, 0, font);
+        // DrawText("abcd", 10, 0, font);
+        // DrawText("efgh", 10, 0, font);
+        // DrawText("ijkl", 10, 0, font);
+
+        ListReset_DrawCommand(&drawCommands);
+        // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
+        BlockDraw(rootBlock, 600, 0, 0, height, font, &drawCommands);
+        DrawCommandHandle(&drawCommands, font);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, width, height);
@@ -105,6 +114,7 @@ int main(void)
     free(data);
 
     BlockKindsDeinit();
+    ListDelete_DrawCommand(&drawCommands);
 
     sgp_shutdown();
     sg_shutdown();
