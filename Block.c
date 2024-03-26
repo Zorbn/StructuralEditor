@@ -47,177 +47,162 @@ BlockKind BlockKinds[BlockKindIdCount];
 
 void BlockKindsInit(void)
 {
-    BlockKinds[BlockKindIdPin] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .text = ".",
-        });
-    BlockKinds[BlockKindIdDo] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindStatement,
-            .searchText = "do",
-            .text = "do",
-            .isVertical = true,
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindStatement),
-                },
-            .defaultChildrenCount = 1,
-        });
-    BlockKinds[BlockKindIdStatementList] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .isVertical = true,
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindStatement),
-                },
-            .defaultChildrenCount = 1,
-        });
-    BlockKinds[BlockKindIdFunctionHeader] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .text = "fn",
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindIdentifier),
-                    NewChildPin(PinKindIdentifier),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdFunction] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindStatement,
-            .searchText = "fn",
-            .isVertical = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChild(BlockKindIdFunctionHeader),
-                    NewChild(BlockKindIdStatementList),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdLambdaFunctionHeader] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .text = "fn",
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindIdentifier),
-                },
-            .defaultChildrenCount = 1,
-        });
-    BlockKinds[BlockKindIdLambdaFunction] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindExpression,
-            .searchText = "fn",
-            .isVertical = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChild(BlockKindIdLambdaFunctionHeader),
-                    NewChild(BlockKindIdStatementList),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdCase] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .text = "case",
-            .isVertical = true,
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindExpression),
-                    NewChildPin(PinKindStatement),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdIfCases] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .text = "if",
-            .isVertical = true,
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChild(BlockKindIdCase),
-                },
-            .defaultChildrenCount = 1,
-        });
-    BlockKinds[BlockKindIdElseCase] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindNone,
-            .text = "else",
-            .isVertical = true,
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindStatement),
-                },
-            .defaultChildrenCount = 1,
-        });
-    BlockKinds[BlockKindIdIf] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindStatement,
-            .searchText = "if",
-            .isVertical = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChild(BlockKindIdIfCases),
-                    NewChild(BlockKindIdElseCase),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdAssignment] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindStatement,
-            .searchText = "=",
-            .text = "=",
-            .isTextInfix = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindExpression),
-                    NewChildPin(PinKindExpression),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdAdd] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindExpression,
-            .searchText = "+",
-            .text = "+",
-            .isTextInfix = true,
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindExpression),
-                    NewChildPin(PinKindExpression),
-                    NewChildPin(PinKindExpression),
-                },
-            .defaultChildrenCount = 3,
-        });
-    BlockKinds[BlockKindIdCall] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindExpression,
-            .searchText = "call",
-            .text = "call",
-            .isGrowable = true,
-            .defaultChildren =
-                (DefaultChildKind[]){
-                    NewChildPin(PinKindExpression),
-                    NewChildPin(PinKindExpression),
-                },
-            .defaultChildrenCount = 2,
-        });
-    BlockKinds[BlockKindIdIdentifier] = BlockKindNew(
-        (BlockKind){
-            .pinKind = PinKindIdentifier,
-            .defaultChildrenCount = 0,
-        });
+    BlockKinds[BlockKindIdPin] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = ".",
+    });
+    BlockKinds[BlockKindIdDo] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "do",
+        .text = "do",
+        .isVertical = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindStatement),
+            },
+        .defaultChildrenCount = 1,
+    });
+    BlockKinds[BlockKindIdStatementList] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .isVertical = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindStatement),
+            },
+        .defaultChildrenCount = 1,
+    });
+    BlockKinds[BlockKindIdFunctionHeader] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = "fn",
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindIdentifier),
+                NewChildPin(PinKindIdentifier),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdFunction] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "fn",
+        .isVertical = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdFunctionHeader),
+                NewChild(BlockKindIdStatementList),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdLambdaFunctionHeader] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = "fn",
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindIdentifier),
+            },
+        .defaultChildrenCount = 1,
+    });
+    BlockKinds[BlockKindIdLambdaFunction] = BlockKindNew((BlockKind){
+        .pinKind = PinKindExpression,
+        .searchText = "fn",
+        .isVertical = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdLambdaFunctionHeader),
+                NewChild(BlockKindIdStatementList),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdCase] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = "case",
+        .isVertical = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindStatement),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdIfCases] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = "if",
+        .isVertical = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdCase),
+            },
+        .defaultChildrenCount = 1,
+    });
+    BlockKinds[BlockKindIdElseCase] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = "else",
+        .isVertical = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindStatement),
+            },
+        .defaultChildrenCount = 1,
+    });
+    BlockKinds[BlockKindIdIf] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "if",
+        .isVertical = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdIfCases),
+                NewChild(BlockKindIdElseCase),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdAssignment] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "=",
+        .text = "=",
+        .isTextInfix = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdAdd] = BlockKindNew((BlockKind){
+        .pinKind = PinKindExpression,
+        .searchText = "+",
+        .text = "+",
+        .isTextInfix = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 3,
+    });
+    BlockKinds[BlockKindIdCall] = BlockKindNew((BlockKind){
+        .pinKind = PinKindExpression,
+        .searchText = "call",
+        .text = "call",
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 2,
+    });
+    BlockKinds[BlockKindIdIdentifier] = BlockKindNew((BlockKind){
+        .pinKind = PinKindIdentifier,
+        .defaultChildrenCount = 0,
+    });
 }
 
 void BlockKindsDeinit(void)
@@ -470,16 +455,42 @@ static void DrawRect(int32_t x, int32_t y, int32_t width, int32_t height)
     sgp_draw_filled_rect((float)x, (float)y, (float)width, (float)height);
 }
 
+static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, int32_t minY)
+{
+    int32_t minI = 0;
+    int32_t maxI = childrenCount - 1;
+
+    if (maxI < 1)
+    {
+        return 0;
+    }
+
+    while (minI != maxI)
+    {
+        int32_t i = (minI + maxI) / 2;
+        Block *child = block->data.parent.children[i];
+
+        if (child->y + child->height < minY)
+        {
+            minI += 1;
+        }
+        else
+        {
+            maxI = i;
+        }
+    }
+
+    return minI;
+}
+
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme)
 {
-    // printf("%d, %d, %d, %d\n", block->x, block->y, block->width, block->height);
-
     if (block == cursorBlock)
     {
         ColorSet(theme->cursorColor);
 
-        DrawRect(block->x - BlockPadding - LineWidth, block->y - BlockPadding - LineWidth,
-            block->width + LineWidth * 2, block->height + LineWidth * 2);
+        DrawRect(block->x - BlockPadding - LineWidth, block->y - BlockPadding - LineWidth, block->width + LineWidth * 2,
+            block->height + LineWidth * 2);
     }
 
     if (block->kindId == BlockKindIdPin)
@@ -521,10 +532,16 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, in
         return;
     }
 
-    // TODO: Only render visible children.
-    for (int32_t i = 0; i < childrenCount; i++)
+    int32_t firstVisibleI = BlockFindFirstVisibleChildI(block, childrenCount, minY);
+
+    for (int32_t i = firstVisibleI; i < childrenCount; i++)
     {
         Block *child = block->data.parent.children[i];
+
+        if (child->y > maxY)
+        {
+            break;
+        }
 
         BlockDraw(child, cursorBlock, depth + 1, minY, maxY, font, theme);
 
@@ -534,110 +551,3 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, in
         }
     }
 }
-
-// DrawResult BlockDrawOne(Block *block, int32_t childrenWidth, int32_t childrenHeight, Font *font)
-// {
-//     const BlockKind *kind = &BlockKinds[block->kindId];
-
-//     int32_t textWidth = kind->textWidth;
-//     int32_t textHeight = kind->textHeight;
-//     char *text = kind->text;
-
-//     if (block->text)
-//     {
-//         text = block->text;
-//         GetTextSize(block->text, &textWidth, &textHeight, font);
-//     }
-
-//     int32_t width = childrenWidth + textWidth + BlockPadding * 2;
-//     int32_t height = childrenHeight + textHeight + BlockPadding * 2;
-
-//     return (DrawResult){
-//         .x = textWidth,
-//         .y = textHeight,
-//         .width = width,
-//         .height = height,
-//     };
-// }
-
-// // Starting from this block, draw until reaching the edge of the screen.
-// DrawResult BlockDraw(Block *block, int32_t x, int32_t y, int32_t minY, int32_t maxY, Font *font, List_DrawCommand *drawCommands)
-// {
-//     if (y > maxY)
-//     {
-//         return (DrawResult){0};
-//     }
-
-//     int32_t width = 0;
-//     int32_t height = 0;
-//     // int32_t startX = x;
-//     for (int32_t i = 0; i < block->childrenCount; i++)
-//     {
-//         if (y + height > maxY)
-//         {
-//             break;
-//         }
-
-//         DrawResult result = BlockDraw(block->children[i], x, y + height, minY, maxY, font, drawCommands);
-// //
-// //         if (result.x < x)
-//         {
-//             x = result.x;
-//         }
-
-//         if (result.width > width)
-//         {
-//             width = result.width;
-//         }
-
-//         height += result.height;
-//     }
-
-//     DrawResult result = BlockDrawOne(block, width, height, font);
-//     result.x = x - result.x;
-//     // result.y = y - result.y;
-
-//     DrawCommand command = (DrawCommand){
-//         .block = block,
-//         .x = result.x,
-//         .y = y,
-//         .width = result.width,
-//         .height = result.height,
-//     };
-//     ListPush_DrawCommand(drawCommands, command);
-
-//     return result;
-// }
-
-// void DrawCommandHandle(List_DrawCommand *drawCommands, Font *font)
-// {
-//     for (int32_t i = (int32_t)drawCommands->length - 1; i >= 0; i--)
-//     {
-//         const DrawCommand *command = &drawCommands->data[i];
-//         const BlockKind *kind = &BlockKinds[command->block->kindId];
-
-//         // printf("%d, %d, %d, %d\n", command->x, command->y, command->width, command->height);
-
-//         char *text = kind->text;
-
-//         if (command->block->text)
-//         {
-//             text = command->block->text;
-//         }
-
-//         sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
-//         sgp_draw_filled_rect((float)command->x, (float)command->y, (float)command->width, (float)command->height);
-//         sgp_set_color(0.0f, 0.0f, 0.0f, 1.0f);
-//         sgp_draw_filled_rect((float)command->x + LineWidth, (float)command->y + LineWidth,
-//             (float)command->width - LineWidth * 2, (float)command->height - LineWidth * 2);
-
-//         if (text)
-//         {
-//             float textY = (float)(command->y + BlockPadding) - BlockPadding * 0.5f;
-//             sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
-//             DrawText(text, (float)(command->x + BlockPadding), textY, font);
-//         }
-//     }
-
-//     // printf("\n\n\n\n");
-// }
