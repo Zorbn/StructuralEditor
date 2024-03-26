@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Font.h"
-#include "List.h"
+#include "Theme.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -58,56 +58,52 @@ typedef struct BlockKind
 
 BlockKind BlockKinds[BlockKindIdCount];
 
-typedef struct Block
-{
-    struct Block *parent;
+typedef struct Block Block;
 
-    // TODO: Use a union so that identifiers don't have child-related vars, and everything
-    // else doesn't have text vars (char *text, textWidth, textHeight).
-    struct Block **children;
+typedef struct BlockParentData
+{
+    Block **children;
     int32_t childrenCount;
     int32_t childrenCapacity;
+} BlockParentData;
 
+typedef struct BlockIdentifierData
+{
     char *text;
     int32_t textWidth;
     int32_t textHeight;
-    // END TODO
+} BlockIdentifierData;
 
-    // The element for this block in it's parent's children array.
-    int32_t childI;
+// A block can either be a parent or an identifier.
+typedef union BlockData
+{
+    BlockParentData parent;
+    BlockIdentifierData identifier;
+} BlockData;
+
+typedef struct Block
+{
+    BlockData data;
+    Block *parent;
+
+    int32_t x;
+    int32_t y;
+    int32_t width;
+    int32_t height;
 
     BlockKindId kindId;
 } Block;
 
-typedef struct DrawCommand
-{
-    Block *block;
-
-    int32_t x;
-    int32_t y;
-    int32_t width;
-    int32_t height;
-} DrawCommand;
-
-ListDefine(DrawCommand);
-
-typedef struct DrawResult
-{
-    int32_t x;
-    int32_t y;
-    int32_t width;
-    int32_t height;
-} DrawResult;
-
-void BlockKindsInit(Font *font);
+void BlockKindsInit(void);
 void BlockKindsDeinit(void);
+void BlockKindsUpdateTextSize(Font *font);
 
 Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI);
 void BlockDelete(Block *block);
+int32_t BlockGetChildrenCount(Block *block);
+char *BlockGetText(Block *block);
+void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
 void BlockReplaceChild(Block *block, Block *child, int32_t i);
 uint64_t BlockCountAll(Block *block);
-uint64_t BlockSizeAll(Block *block);
-DrawResult BlockDraw(
-    Block *block, int32_t x, int32_t y, int32_t minY, int32_t maxY, Font *font, List_DrawCommand *drawCommands);
-
-void DrawCommandHandle(List_DrawCommand *drawCommands, Font *font);
+void BlockUpdateTree(Block *block, int32_t x, int32_t y);
+void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme);

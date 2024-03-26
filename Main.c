@@ -13,6 +13,7 @@
 #include "Font.h"
 #include "Parser.h"
 #include "Block.h"
+#include "Theme.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -45,6 +46,11 @@ int main(void)
     int32_t dataCount = 0;
     {
         FILE *file = fopen("save.lua", "r");
+        if (!file)
+        {
+            puts("Expected \"save.lua\"");
+            exit(EXIT_FAILURE);
+        }
 
         fseek(file, 0, SEEK_END);
         dataCount = ftell(file);
@@ -59,19 +65,26 @@ int main(void)
     }
 
     Font *font = FontNew("DejaVuSans.ttf", 16);
+    Theme theme = (Theme){
+        .backgroundColor = ColorNew255(51, 51, 51),
+        .evenColor = ColorNew255(40, 40, 40),
+        .oddColor = ColorNew255(33, 33, 33),
+        .textColor = ColorNew255(253, 244, 193),
+        .cursorColor = ColorNew255(221, 111, 72),
+        .pinColor = ColorNew255(124, 111, 100),
+    };
 
-    BlockKindsInit(font);
+    BlockKindsInit();
+    BlockKindsUpdateTextSize(font);
 
-    Parser parser = ParserNew(LexerNew(data, dataCount));
+    Parser parser = ParserNew(LexerNew(data, dataCount), font);
     Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
-    Block *cursorBlock = rootBlock->children[4]->children[1]->children[1];
+
+    BlockUpdateTree(rootBlock, 0, 0);
 
     printf("Block count: %llu\n", BlockCountAll(rootBlock));
-    printf("Block size all: %llu\n", BlockSizeAll(rootBlock));
     printf("Block size individual: %zd\n", sizeof(Block));
     printf("Block kind size: %zd\n", sizeof(BlockKindId));
-
-    List_DrawCommand drawCommands = ListNew_DrawCommand(64);
 
     while (!glfwWindowShouldClose(window))
     {
@@ -81,22 +94,21 @@ int main(void)
         sgp_begin(width, height);
         sgp_viewport(0, 0, width, height);
 
-        sgp_set_color(0.1f, 0.1f, 0.1f, 1.0f);
+        // sgp_set_color(0.1f, 0.1f, 0.1f, 1.0f);
+        ColorSet(theme.backgroundColor);
         sgp_clear();
 
-        sgp_set_color(1.0f, 0.5f, 0.3f, 1.0f);
-        sgp_draw_filled_rect(0, 0, 100, 50);
+        // sgp_set_color(1.0f, 0.5f, 0.3f, 1.0f);
+        // sgp_draw_filled_rect(0, 0, 100, 50);
 
-        sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
+        // sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
         // DrawText("hello", 10, 0, font);
         // DrawText("abcd", 10, 0, font);
         // DrawText("efgh", 10, 0, font);
         // DrawText("ijkl", 10, 0, font);
 
-        ListReset_DrawCommand(&drawCommands);
         // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
-        BlockDraw(rootBlock, 600, 0, 0, height, font, &drawCommands);
-        DrawCommandHandle(&drawCommands, font);
+        BlockDraw(rootBlock, NULL, 0, 0, height, font, &theme);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, width, height);
@@ -114,7 +126,6 @@ int main(void)
     free(data);
 
     BlockKindsDeinit();
-    ListDelete_DrawCommand(&drawCommands);
 
     sgp_shutdown();
     sg_shutdown();

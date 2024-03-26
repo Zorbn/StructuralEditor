@@ -6,9 +6,10 @@
 typedef struct Parser
 {
     Lexer lexer;
+    Font *font;
 } Parser;
 
-Parser ParserNew(Lexer lexer);
+Parser ParserNew(Lexer lexer, Font *font);
 
 void ParserMatch(Parser *parser, char *string);
 bool ParserHas(Parser *parser, char *string);

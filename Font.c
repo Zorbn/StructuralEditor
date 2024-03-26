@@ -153,6 +153,12 @@ static void FontStashRenderDraw(void *user, const float *vertices, const float *
 Font *FontNew(const char *path, float size)
 {
     FILE *file = fopen(path, "rb");
+    if (!file)
+    {
+        printf("Expected \"%s\"\n", path);
+        exit(EXIT_FAILURE);
+    }
+
     fseek(file, 0, SEEK_END);
     long fileSize = ftell(file);
     fseek(file, 0, SEEK_SET);
@@ -198,8 +204,13 @@ int FontDelete(Font *font)
     return 0;
 }
 
-int DrawText(const char *text, float x, float y, Font *font)
+int DrawText(const char *text, int32_t x, int32_t y, Font *font)
 {
+    if (!text)
+    {
+        return 0;
+    }
+
     if (!font)
     {
         fprintf(stderr, "No font set.\n");
@@ -219,7 +230,7 @@ int DrawText(const char *text, float x, float y, Font *font)
     float fontHeight = 0.0;
     fonsVertMetrics(font->context, NULL, NULL, &fontHeight);
     fonsSetBlur(font->context, 0);
-    fonsDrawText(font->context, x, y + fontHeight, text, NULL);
+    fonsDrawText(font->context, (float)x, (float)y + fontHeight, text, NULL);
 
     return 0;
 }

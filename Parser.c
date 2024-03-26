@@ -5,10 +5,11 @@
 #include <stdio.h>
 #include <string.h>
 
-Parser ParserNew(Lexer lexer)
+Parser ParserNew(Lexer lexer, Font *font)
 {
     return (Parser){
         .lexer = lexer,
+        .font = font,
     };
 }
 
@@ -309,12 +310,14 @@ Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI)
     Token text = LexerNext(&parser->lexer);
 
     Block *block = BlockNew(BlockKindIdIdentifier, parent, childI);
-    int32_t textLength = text.end - text.start;
-    block->text = malloc(textLength + 1);
-    strncpy(block->text, parser->lexer.data + text.start, textLength);
-    block->text[textLength] = '\0';
+    BlockIdentifierData *identifierData = &block->data.identifier;
 
-    // TODO: Update block text size.
+    int32_t textLength = text.end - text.start;
+    identifierData->text = malloc(textLength + 1);
+    strncpy(identifierData->text, parser->lexer.data + text.start, textLength);
+    identifierData->text[textLength] = '\0';
+
+    GetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, parser->font);
 
     return block;
 }
