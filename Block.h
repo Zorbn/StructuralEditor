@@ -61,16 +61,17 @@ BlockKind BlockKinds[BlockKindIdCount];
 typedef struct Block
 {
     struct Block *parent;
-    struct Block **children;
-    char *text;
 
     // TODO: Use a union so that identifiers don't have child-related vars, and everything
     // else doesn't have text vars (char *text, textWidth, textHeight).
+    struct Block **children;
     int32_t childrenCount;
     int32_t childrenCapacity;
 
-    // int16_t textWidth;
-    // int16_t textHeight;
+    char *text;
+    int32_t textWidth;
+    int32_t textHeight;
+    // END TODO
 
     // The element for this block in it's parent's children array.
     int32_t childI;
