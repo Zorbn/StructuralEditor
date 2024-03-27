@@ -29,7 +29,8 @@ bool ParserHas(Parser *parser, char *string)
     return LexerTokenEquals(&parser->lexer, parser->lexer.current, string);
 }
 
-void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *parser, Block *parent, int32_t childI), int32_t startI, char *end, char *separator)
+// TODO: Create a blockId type to distinguish between parentI here which is an index in blockPool and childI here which is an index in parent.children.
+void ParserList(Parser *parser, int32_t parentI, int32_t (*ParserFunction)(Parser *parser, int32_t parentI, int32_t childI), int32_t startI, char *end, char *separator)
 {
     int32_t i = startI;
 
@@ -40,7 +41,7 @@ void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *
             ParserMatch(parser, separator);
         }
 
-        BlockReplaceChild(parent, ParserFunction(parser, parent, i), i);
+        BlockReplaceChild(parentI, ParserFunction(parser, parentI, i), i);
         i += 1;
     }
 
@@ -49,43 +50,43 @@ void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *
 
 // Specific parse functions:
 
-Block *ParserParseDo(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseDo(Parser *parser, int32_t parentI, int32_t childI)
 {
     ParserMatch(parser, "do");
 
-    Block *doBlock = BlockNew(BlockKindIdDo, parent, childI);
+    int32_t doBlockI = BlockNew(BlockKindIdDo, parentI, childI);
 
     int32_t i = 0;
     while (!ParserHas(parser, "end"))
     {
-        Block *statement = ParserParseStatement(parser, doBlock, i);
-        BlockReplaceChild(doBlock, statement, i);
+        int32_t statementI = ParserParseStatement(parser, doBlockI, i);
+        BlockReplaceChild(doBlockI, statementI, i);
         i += 1;
     }
 
-    return doBlock;
+    return doBlockI;
 }
 
-Block *ParserParseCase(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseCase(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *caseBlock = BlockNew(BlockKindIdCase, parent, childI);
-    Block *condition = ParserParseExpression(parser, caseBlock, 1);
-    BlockReplaceChild(caseBlock, condition, 1);
+    int32_t caseBlockI = BlockNew(BlockKindIdCase, parentI, childI);
+    int32_t conditionI = ParserParseExpression(parser, caseBlockI, 1);
+    BlockReplaceChild(caseBlockI, conditionI, 1);
     ParserMatch(parser, "then");
 
     int32_t i = 1;
     while (!ParserHas(parser, "elseif") && !ParserHas(parser, "else") && !ParserHas(parser, "end"))
     {
-        BlockReplaceChild(caseBlock, ParserParseStatement(parser, caseBlock, i), i);
+        BlockReplaceChild(caseBlockI, ParserParseStatement(parser, caseBlockI, i), i);
         i += 1;
     }
 
-    return caseBlock;
+    return caseBlockI;
 }
 
-Block *ParserParseIfCases(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseIfCases(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *ifCases = BlockNew(BlockKindIdIfCases, parent,childI);
+    int32_t ifCasesI = BlockNew(BlockKindIdIfCases, parentI, childI);
 
     int32_t i = 0;
     while (!ParserHas(parser, "else") && !ParserHas(parser, "end"))
@@ -99,141 +100,141 @@ Block *ParserParseIfCases(Parser *parser, Block *parent, int32_t childI)
             ParserMatch(parser, "elseif");
         }
 
-        BlockReplaceChild(ifCases, ParserParseCase(parser, ifCases, i), i);
+        BlockReplaceChild(ifCasesI, ParserParseCase(parser, ifCasesI, i), i);
         i += 1;
     }
 
-    return ifCases;
+    return ifCasesI;
 }
 
-Block *ParserParseElseCase(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseElseCase(Parser *parser, int32_t parentI, int32_t childI)
 {
     ParserMatch(parser, "else");
 
-    Block *elseCase = BlockNew(BlockKindIdElseCase, parent, childI);
+    int32_t elseCaseI = BlockNew(BlockKindIdElseCase, parentI, childI);
 
-    ParserList(parser, elseCase, ParserParseStatement, 0, "end", NULL);
+    ParserList(parser, elseCaseI, ParserParseStatement, 0, "end", NULL);
 
-    return elseCase;
+    return elseCaseI;
 }
 
-Block *ParserParseIf(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseIf(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *ifBlock = BlockNew(BlockKindIdIf, parent, childI);
+    int32_t ifBlockI = BlockNew(BlockKindIdIf, parentI, childI);
 
-    BlockReplaceChild(ifBlock, ParserParseIfCases(parser, ifBlock, 0), 0);
+    BlockReplaceChild(ifBlockI, ParserParseIfCases(parser, ifBlockI, 0), 0);
 
     if (ParserHas(parser, "else"))
     {
-        BlockReplaceChild(ifBlock, ParserParseElseCase(parser, ifBlock, 0), 1);
+        BlockReplaceChild(ifBlockI, ParserParseElseCase(parser, ifBlockI, 0), 1);
     }
     else
     {
         ParserMatch(parser, "end");
     }
 
-    return ifBlock;
+    return ifBlockI;
 }
 
-Block *ParserParseStatementList(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseStatementList(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *statementList = BlockNew(BlockKindIdStatementList, parent, childI);
+    int32_t statementListI = BlockNew(BlockKindIdStatementList, parentI, childI);
 
-    ParserList(parser, statementList, ParserParseStatement, 0, "end", NULL);
+    ParserList(parser, statementListI, ParserParseStatement, 0, "end", NULL);
 
-    return statementList;
+    return statementListI;
 }
 
-Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseFunctionHeader(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *functionHeader = BlockNew(BlockKindIdFunctionHeader, parent, childI);
+    int32_t functionHeaderI = BlockNew(BlockKindIdFunctionHeader, parentI, childI);
 
     ParserMatch(parser, "function");
 
-    BlockReplaceChild(functionHeader, ParserParseIdentifier(parser, parent, 0), 0);
+    BlockReplaceChild(functionHeaderI, ParserParseIdentifier(parser, parentI, 0), 0);
 
     ParserMatch(parser, "(");
-    ParserList(parser, functionHeader, ParserParseIdentifier, 1, ")", ",");
+    ParserList(parser, functionHeaderI, ParserParseIdentifier, 1, ")", ",");
 
-    return functionHeader;
+    return functionHeaderI;
 }
 
-Block *ParserParseFunction(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseFunction(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *functionBlock = BlockNew(BlockKindIdFunction, parent, childI);
+    int32_t functionBlockI = BlockNew(BlockKindIdFunction, parentI, childI);
 
-    BlockReplaceChild(functionBlock, ParserParseFunctionHeader(parser, functionBlock, 0), 0);
-    BlockReplaceChild(functionBlock, ParserParseStatementList(parser, functionBlock, 1), 1);
+    BlockReplaceChild(functionBlockI, ParserParseFunctionHeader(parser, functionBlockI, 0), 0);
+    BlockReplaceChild(functionBlockI, ParserParseStatementList(parser, functionBlockI, 1), 1);
 
-    return functionBlock;
+    return functionBlockI;
 }
 
-Block *ParserParseLambdaFunctionHeader(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseLambdaFunctionHeader(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *lambdaFunctionHeader = BlockNew(BlockKindIdLambdaFunctionHeader, parent, childI);
+    int32_t lambdaFunctionHeaderI = BlockNew(BlockKindIdLambdaFunctionHeader, parentI, childI);
 
     ParserMatch(parser, "function");
 
     ParserMatch(parser, "(");
-    ParserList(parser, lambdaFunctionHeader, ParserParseIdentifier, 1, ")", ",");
+    ParserList(parser, lambdaFunctionHeaderI, ParserParseIdentifier, 1, ")", ",");
 
-    return lambdaFunctionHeader;
+    return lambdaFunctionHeaderI;
 }
 
-Block *ParserParseLambdaFunction(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseLambdaFunction(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *lambdaFunction = BlockNew(BlockKindIdLambdaFunction, parent, childI);
+    int32_t lambdaFunctionI = BlockNew(BlockKindIdLambdaFunction, parentI, childI);
 
-    BlockReplaceChild(lambdaFunction, ParserParseLambdaFunctionHeader(parser, lambdaFunction, 0), 0);
-    BlockReplaceChild(lambdaFunction, ParserParseStatementList(parser, lambdaFunction, 1), 1);
+    BlockReplaceChild(lambdaFunctionI, ParserParseLambdaFunctionHeader(parser, lambdaFunctionI, 0), 0);
+    BlockReplaceChild(lambdaFunctionI, ParserParseStatementList(parser, lambdaFunctionI, 1), 1);
 
-    return lambdaFunction;
+    return lambdaFunctionI;
 }
 
-Block *ParserParseAddition(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseAddition(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *left = ParserParseUnarySuffix(parser, parent, childI);
+    int32_t leftI = ParserParseUnarySuffix(parser, parentI, childI);
 
     if (!ParserHas(parser, "+"))
     {
-        return left;
+        return leftI;
     }
 
-    Block *add = BlockNew(BlockKindIdAdd, parent, childI);
-    left->parent = add;
-    BlockReplaceChild(add, left, 0);
+    int32_t addI = BlockNew(BlockKindIdAdd, parentI, childI);
+    blockPool.data[leftI].parentI = addI;
+    BlockReplaceChild(addI, leftI, 0);
 
     int32_t i = 1;
     while (ParserHas(parser, "+"))
     {
         LexerNext(&parser->lexer);
 
-        Block *expression = ParserParseUnarySuffix(parser, add, i);
-        BlockReplaceChild(add, expression, i);
+        int32_t expressionI = ParserParseUnarySuffix(parser, addI, i);
+        BlockReplaceChild(addI, expressionI, i);
         i += 1;
     }
 
-    return add;
+    return addI;
 }
 
-Block *ParserParseUnarySuffix(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseUnarySuffix(Parser *parser, int32_t parentI, int32_t childI)
 {
-    Block *left = ParserParsePrimary(parser, parent, childI);
+    int32_t leftI = ParserParsePrimary(parser, parentI, childI);
 
     while (ParserHas(parser, "("))
     {
         // This is a call.
         LexerNext(&parser->lexer);
 
-        Block *call = BlockNew(BlockKindIdCall, parent, childI);
-        left->parent = call;
-        BlockReplaceChild(call, left, 0);
+        int32_t callI = BlockNew(BlockKindIdCall, parentI, childI);
+        blockPool.data[leftI].parentI = callI;
+        BlockReplaceChild(callI, leftI, 0);
 
         int32_t i = 1;
         while (!ParserHas(parser, ")"))
         {
-            Block *expression = ParserParseExpression(parser, call, i);
-            BlockReplaceChild(call, expression, i);
+            int32_t expressionI = ParserParseExpression(parser, callI, i);
+            BlockReplaceChild(callI, expressionI, i);
             i += 1;
 
             if (!ParserHas(parser, ","))
@@ -246,71 +247,71 @@ Block *ParserParseUnarySuffix(Parser *parser, Block *parent, int32_t childI)
 
         ParserMatch(parser, ")");
 
-        left = call;
+        leftI = callI;
     }
 
-    return left;
+    return leftI;
 }
 
-Block *ParserParsePrimary(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParsePrimary(Parser *parser, int32_t parentI, int32_t childI)
 {
     if (ParserHas(parser, "function"))
     {
-        return ParserParseLambdaFunction(parser, parent, childI);
+        return ParserParseLambdaFunction(parser, parentI, childI);
     }
 
-    return ParserParseIdentifier(parser, parent, childI);
+    return ParserParseIdentifier(parser, parentI, childI);
 }
 
 // Pin kinds:
 
-Block *ParserParseExpression(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseExpression(Parser *parser, int32_t parentI, int32_t childI)
 {
-    return ParserParseAddition(parser, parent, childI);
+    return ParserParseAddition(parser, parentI, childI);
 }
 
-Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseStatement(Parser *parser, int32_t parentI, int32_t childI)
 {
     Token start = LexerPeek(&parser->lexer);
 
     if (LexerTokenEquals(&parser->lexer, start, "do"))
     {
-        return ParserParseDo(parser, parent, childI);
+        return ParserParseDo(parser, parentI, childI);
     }
     else if (LexerTokenEquals(&parser->lexer, start, "if"))
     {
-        return ParserParseIf(parser, parent, childI);
+        return ParserParseIf(parser, parentI, childI);
     }
     else if (LexerTokenEquals(&parser->lexer, start, "function"))
     {
-        return ParserParseFunction(parser, parent, childI);
+        return ParserParseFunction(parser, parentI, childI);
     }
 
-    Block *expression = ParserParseExpression(parser, parent, childI);
+    int32_t expressionI = ParserParseExpression(parser, parentI, childI);
 
     if (!ParserHas(parser, "="))
     {
-        return expression;
+        return expressionI;
     }
 
     LexerNext(&parser->lexer);
 
-    Block *assignment = BlockNew(BlockKindIdAssignment, parent, childI);
-    expression->parent = assignment;
-    Block *rightExpression = ParserParseExpression(parser, assignment, 1);
-    BlockReplaceChild(assignment, expression, 0);
-    BlockReplaceChild(assignment, rightExpression, 1);
+    int32_t assignmentI = BlockNew(BlockKindIdAssignment, parentI, childI);
+    blockPool.data[expressionI].parentI = assignmentI;
+    int32_t rightExpressionI = ParserParseExpression(parser, assignmentI, 1);
+    BlockReplaceChild(assignmentI, expressionI, 0);
+    BlockReplaceChild(assignmentI, rightExpressionI, 1);
 
-    return assignment;
+    return assignmentI;
 }
 
 // TODO: Simplify identifiers, ie: table.field should not be an identifier, it should be (. table field) where table and field are separate identifiers.
-Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI)
+int32_t ParserParseIdentifier(Parser *parser, int32_t parentI, int32_t childI)
 {
     Token text = LexerNext(&parser->lexer);
 
-    Block *block = BlockNew(BlockKindIdIdentifier, parent, childI);
-    BlockIdentifierData *identifierData = &block->data.identifier;
+    int32_t blockI = BlockNew(BlockKindIdIdentifier, parentI, childI);
+    BlockIdentifierData *identifierData = &blockPool.data[blockI].data.identifier;
 
     int32_t textLength = text.end - text.start;
     identifierData->text = malloc(textLength + 1);
@@ -319,5 +320,5 @@ Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI)
 
     GetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, parser->font);
 
-    return block;
+    return blockI;
 }

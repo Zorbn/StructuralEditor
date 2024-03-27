@@ -77,12 +77,17 @@ int main(void)
     BlockKindsInit();
     BlockKindsUpdateTextSize(font);
 
+    blockPool = ListNew_Block(1024);
+    blockPoolUsedBitMasksCount = 1024 / 64;
+    blockPoolUsedBitMasks = calloc(blockPoolUsedBitMasksCount, sizeof(uint64_t));
+
     Parser parser = ParserNew(LexerNew(data, dataCount), font);
-    Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
+    int32_t rootBlockI = ParserParseStatement(&parser, -1, 0);
 
-    BlockUpdateTree(rootBlock, 0, 0);
+    BlockUpdateTree(rootBlockI, 0, 0);
 
-    printf("Block count: %llu\n", BlockCountAll(rootBlock));
+    printf("Block count: %llu\n", BlockCountAll(rootBlockI));
+    printf("Block pool capacity: %llu\n", blockPool.capacity);
     printf("Block size individual: %zd\n", sizeof(Block));
     printf("Block kind size: %zd\n", sizeof(BlockKindId));
 
@@ -108,7 +113,7 @@ int main(void)
         // DrawText("ijkl", 10, 0, font);
 
         // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
-        BlockDraw(rootBlock, NULL, 0, 0, height, font, &theme);
+        BlockDraw(rootBlockI, -1, 0, 0, height, font, &theme);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, width, height);
@@ -121,11 +126,14 @@ int main(void)
         glfwPollEvents();
     }
 
-    BlockDelete(rootBlock);
+    BlockDelete(rootBlockI);
     FontDelete(font);
     free(data);
 
     BlockKindsDeinit();
+
+    ListDelete_Block(&blockPool);
+    free(blockPoolUsedBitMasks);
 
     sgp_shutdown();
     sg_shutdown();
