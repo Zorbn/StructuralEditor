@@ -224,90 +224,21 @@ void BlockKindsUpdateTextSize(Font *font)
     }
 }
 
-// TODO: NO GLOBALS!!!!
-List_Block blockPool;
-uint64_t *blockPoolUsedBitMasks;
-uint64_t blockPoolUsedBitMasksCount;
-
-int32_t BlockNew(BlockKindId kindId, int32_t parentI, int32_t childI)
+Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
 {
-    uint64_t unusedBlockI = 0;
-    bool foundUnusedBlock = false;
-
-    int32_t allocatedMasks = (int32_t)(blockPool.length / 64);
-    for (int32_t maskI = 0; maskI < allocatedMasks; maskI++)
-    {
-        uint64_t mask = blockPoolUsedBitMasks[maskI];
-
-        if (mask == 0xffffffffffffffff)
-        {
-            continue;
-        }
-
-        int32_t allocatedBits = 64;
-
-        if (maskI == allocatedMasks - 1)
-        {
-            allocatedBits = blockPool.length % 64;
-        }
-
-        for (int32_t bitI = 0; bitI < allocatedBits; bitI++)
-        {
-            uint64_t isUsed = (mask >> bitI) & 1;
-
-            if (!isUsed)
-            {
-                unusedBlockI = maskI * 64 + bitI;
-                foundUnusedBlock = true;
-                break;
-            }
-        }
-
-        if (foundUnusedBlock)
-        {
-            break;
-        }
-    }
-
-    int32_t blockI;
-
-    if (foundUnusedBlock)
-    {
-        // printf("unused: %llu\n", unusedBlockI);
-        blockPool.data[unusedBlockI] = (Block){0};
-        blockI = (int32_t)unusedBlockI;
-    }
-    else
-    {
-        ListPush_Block(&blockPool, (Block){0});
-        blockI = (int32_t)blockPool.length - 1;
-        // printf("new: %d, %zu\n", blockI, blockPool.length);
-
-        if (blockPoolUsedBitMasksCount < blockPool.capacity / 64)
-        {
-            blockPoolUsedBitMasksCount = blockPool.capacity / 64;
-            blockPoolUsedBitMasks = realloc(blockPoolUsedBitMasks, blockPoolUsedBitMasksCount * sizeof(uint64_t));
-            assert(blockPoolUsedBitMasks);
-        }
-    }
-
-    blockPoolUsedBitMasks[blockI / 64] |= (uint64_t)1 << (blockI % 64);
-
     const BlockKind *kind = &BlockKinds[kindId];
 
-    // Block *block = malloc(sizeof(Block));
-    // assert(block);
-
-    Block *block = &blockPool.data[blockI];
+    Block *block = malloc(sizeof(Block));
+    assert(block);
 
     *block = (Block){
         .kindId = kindId,
-        .parentI = parentI,
+        .parent = parent,
     };
 
     if (kindId == BlockKindIdIdentifier)
     {
-        return blockI;
+        return block;
     }
 
     block->data.parent = (BlockParentData){
@@ -317,29 +248,27 @@ int32_t BlockNew(BlockKindId kindId, int32_t parentI, int32_t childI)
 
     if (kind->defaultChildrenCount > 0)
     {
-        blockPool.data[blockI].data.parent.children = malloc(sizeof(int32_t) * kind->defaultChildrenCount);
-        assert(blockPool.data[blockI].data.parent.children);
+        block->data.parent.children = malloc(sizeof(Block *) * kind->defaultChildrenCount);
+        assert(block->children);
 
         for (int32_t i = 0; i < kind->defaultChildrenCount; i++)
         {
             if (kind->defaultChildren[i].isPin)
             {
-                blockPool.data[blockI].data.parent.children[i] = BlockNew(BlockKindIdPin, blockI, i);
+                block->data.parent.children[i] = BlockNew(BlockKindIdPin, block, i);
             }
             else
             {
-                blockPool.data[blockI].data.parent.children[i] = BlockNew(kind->defaultChildren[i].blockKindId, blockI, i);
+                block->data.parent.children[i] = BlockNew(kind->defaultChildren[i].blockKindId, block, i);
             }
         }
     }
 
-    return blockI;
+    return block;
 }
 
-void BlockDelete(int32_t blockI)
+void BlockDelete(Block *block)
 {
-    Block *block = &blockPool.data[blockI];
-
     if (block->kindId == BlockKindIdIdentifier)
     {
         free(block->data.identifier.text);
@@ -354,14 +283,11 @@ void BlockDelete(int32_t blockI)
         free(block->data.parent.children);
     }
 
-    // free(block);
-    blockPoolUsedBitMasks[blockI / 64] &= ~((uint64_t)1 << (blockI % 64));
+    free(block);
 }
 
-int32_t BlockGetChildrenCount(int32_t blockI)
+int32_t BlockGetChildrenCount(Block *block)
 {
-    Block *block = &blockPool.data[blockI];
-
     if (block->kindId == BlockKindIdIdentifier)
     {
         return 0;
@@ -370,10 +296,8 @@ int32_t BlockGetChildrenCount(int32_t blockI)
     return block->data.parent.childrenCount;
 }
 
-char *BlockGetText(int32_t blockI)
+char *BlockGetText(Block *block)
 {
-    Block *block = &blockPool.data[blockI];
-
     if (block->kindId == BlockKindIdIdentifier)
     {
         return block->data.identifier.text;
@@ -382,10 +306,8 @@ char *BlockGetText(int32_t blockI)
     return BlockKinds[block->kindId].text;
 }
 
-void BlockGetTextSize(int32_t blockI, int32_t *width, int32_t *height)
+void BlockGetTextSize(Block *block, int32_t *width, int32_t *height)
 {
-    Block *block = &blockPool.data[blockI];
-
     if (block->kindId == BlockKindIdIdentifier)
     {
         *width = block->data.identifier.textWidth;
@@ -398,9 +320,8 @@ void BlockGetTextSize(int32_t blockI, int32_t *width, int32_t *height)
 }
 
 // Frees the old child if it exists, expands this block's children array as necessary.
-void BlockReplaceChild(int32_t blockI, int32_t childI, int32_t i)
+void BlockReplaceChild(Block *block, Block *child, int32_t i)
 {
-    Block *block = &blockPool.data[blockI];
     assert(block->kindId != BlockKindIdIdentifier);
 
     BlockParentData *parentData = &block->data.parent;
@@ -410,8 +331,8 @@ void BlockReplaceChild(int32_t blockI, int32_t childI, int32_t i)
         if (i >= parentData->childrenCapacity)
         {
             parentData->childrenCapacity *= 2;
-            parentData->children = realloc(parentData->children, sizeof(int32_t) * parentData->childrenCapacity);
-            assert(parentData->children);
+            parentData->children = realloc(parentData->children, sizeof(Block *) * parentData->childrenCapacity);
+            assert(block->children);
         }
 
         i = parentData->childrenCount;
@@ -422,19 +343,15 @@ void BlockReplaceChild(int32_t blockI, int32_t childI, int32_t i)
         BlockDelete(parentData->children[i]);
     }
 
-    parentData->children[i] = childI;
-
-    Block *child = &blockPool.data[childI];
-    child->parentI = blockI;
+    parentData->children[i] = child;
+    child->parent = block;
 }
 
-uint64_t BlockCountAll(int32_t blockI)
+uint64_t BlockCountAll(Block *block)
 {
-    Block *block = &blockPool.data[blockI];
-
     uint64_t count = 1;
 
-    for (int32_t i = 0; i < BlockGetChildrenCount(blockI); i++)
+    for (int32_t i = 0; i < BlockGetChildrenCount(block); i++)
     {
         count += BlockCountAll(block->data.parent.children[i]);
     }
@@ -445,17 +362,15 @@ uint64_t BlockCountAll(int32_t blockI)
 static const int32_t BlockPadding = 6;
 static const int32_t LineWidth = 3;
 
-void BlockUpdateTree(int32_t blockI, int32_t x, int32_t y)
+void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 {
-    Block *block = &blockPool.data[blockI];
-
     block->x = x;
     block->y = y;
 
     int32_t textWidth, textHeight;
-    BlockGetTextSize(blockI, &textWidth, &textHeight);
+    BlockGetTextSize(block, &textWidth, &textHeight);
 
-    int32_t childrenCount = BlockGetChildrenCount(blockI);
+    int32_t childrenCount = BlockGetChildrenCount(block);
 
     x += BlockPadding;
 
@@ -482,10 +397,9 @@ void BlockUpdateTree(int32_t blockI, int32_t x, int32_t y)
     {
         for (int32_t i = 0; i < childrenCount; i++)
         {
-            int32_t childI = block->data.parent.children[i];
-            Block *child = &blockPool.data[childI];
+            Block *child = block->data.parent.children[i];
 
-            BlockUpdateTree(childI, x, y);
+            BlockUpdateTree(child, x, y);
 
             x += child->width + BlockPadding;
             y += child->height + BlockPadding;
@@ -500,10 +414,9 @@ void BlockUpdateTree(int32_t blockI, int32_t x, int32_t y)
 
         for (int32_t i = 0; i < childrenCount; i++)
         {
-            int32_t childI = block->data.parent.children[i];
-            Block *child = &blockPool.data[childI];
+            Block *child = block->data.parent.children[i];
 
-            BlockUpdateTree(childI, x, y);
+            BlockUpdateTree(child, x, y);
 
             x += child->width + BlockPadding;
 
@@ -555,8 +468,7 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
     while (minI != maxI)
     {
         int32_t i = (minI + maxI) / 2;
-        int32_t childI = block->data.parent.children[i];
-        Block *child = &blockPool.data[childI];
+        Block *child = block->data.parent.children[i];
 
         if (child->y + child->height < minY)
         {
@@ -571,11 +483,9 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
     return minI;
 }
 
-void BlockDraw(int32_t blockI, int32_t cursorBlockI, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme)
+void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme)
 {
-    Block *block = &blockPool.data[blockI];
-
-    if (blockI == cursorBlockI)
+    if (block == cursorBlock)
     {
         ColorSet(theme->cursorColor);
 
@@ -597,7 +507,7 @@ void BlockDraw(int32_t blockI, int32_t cursorBlockI, int32_t depth, int32_t minY
     ColorSet(theme->textColor);
 
     int32_t textY = block->y - BlockPadding / 2;
-    int32_t childrenCount = BlockGetChildrenCount(blockI);
+    int32_t childrenCount = BlockGetChildrenCount(block);
     bool hasChildren = childrenCount > 0;
 
     if (!hasChildren)
@@ -606,7 +516,7 @@ void BlockDraw(int32_t blockI, int32_t cursorBlockI, int32_t depth, int32_t minY
     }
 
     BlockKind *kind = &BlockKinds[block->kindId];
-    char *text = BlockGetText(blockI);
+    char *text = BlockGetText(block);
 
     // TODO: Also do this is the text is infix, but
     // the node has < 2 children. eg. so that -/+
@@ -626,15 +536,14 @@ void BlockDraw(int32_t blockI, int32_t cursorBlockI, int32_t depth, int32_t minY
 
     for (int32_t i = firstVisibleI; i < childrenCount; i++)
     {
-        int32_t childI = block->data.parent.children[i];
-        Block *child = &blockPool.data[childI];
+        Block *child = block->data.parent.children[i];
 
         if (child->y > maxY)
         {
             break;
         }
 
-        BlockDraw(childI, cursorBlockI, depth + 1, minY, maxY, font, theme);
+        BlockDraw(child, cursorBlock, depth + 1, minY, maxY, font, theme);
 
         if (i < childrenCount - 1 && kind->isTextInfix)
         {

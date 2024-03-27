@@ -13,24 +13,22 @@ Parser ParserNew(Lexer lexer, Font *font);
 
 void ParserMatch(Parser *parser, char *string);
 bool ParserHas(Parser *parser, char *string);
-void ParserList(Parser *parser, int32_t parentI,
-    int32_t (*ParserFunction)(Parser *parser, int32_t parentI, int32_t childI), int32_t startI, char *end,
-    char *separator);
+void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *parser, Block *parent, int32_t childI), int32_t startI, char *end, char *separator);
 
-int32_t ParserParseDo(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseCase(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseIfCases(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseElseCase(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseIf(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseStatementList(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseFunctionHeader(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseFunction(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseLambdaFunctionHeader(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseLambdaFunction(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseAddition(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseUnarySuffix(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParsePrimary(Parser *parser, int32_t parentI, int32_t childI);
+Block *ParserParseDo(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseCase(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseIfCases(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseElseCase(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseIf(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseStatementList(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseFunction(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseLambdaFunctionHeader(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseLambdaFunction(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseAddition(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseUnarySuffix(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParsePrimary(Parser *parser, Block *parent, int32_t childI);
 
-int32_t ParserParseExpression(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseStatement(Parser *parser, int32_t parentI, int32_t childI);
-int32_t ParserParseIdentifier(Parser *parser, int32_t parentI, int32_t childI);
+Block *ParserParseExpression(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI);
