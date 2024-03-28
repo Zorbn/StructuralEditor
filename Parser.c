@@ -69,8 +69,8 @@ Block *ParserParseDo(Parser *parser, Block *parent, int32_t childI)
 Block *ParserParseCase(Parser *parser, Block *parent, int32_t childI)
 {
     Block *caseBlock = BlockNew(BlockKindIdCase, parent, childI);
-    Block *condition = ParserParseExpression(parser, caseBlock, 1);
-    BlockReplaceChild(caseBlock, condition, 1);
+    Block *condition = ParserParseExpression(parser, caseBlock, 0);
+    BlockReplaceChild(caseBlock, condition, 0);
     ParserMatch(parser, "then");
 
     int32_t i = 1;
