@@ -14,11 +14,24 @@
 #include "Parser.h"
 #include "Block.h"
 #include "Theme.h"
+#include "Cursor.h"
+#include "Input.h"
 
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+typedef struct WindowData
+{
+    Input *input;
+} WindowData;
+
+void WindowKeyCallback(GLFWwindow* window, int key, int scanCode, int action, int modifiers)
+{
+    WindowData *windowData = glfwGetWindowUserPointer(window);
+    InputUpdateButton(windowData->input, key, action);
+}
 
 int main(void)
 {
@@ -31,6 +44,14 @@ int main(void)
     GLFWwindow *window = glfwCreateWindow(800, 600, "Structural Editor", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
+
+    Input input = InputNew();
+    WindowData windowData = (WindowData){
+        .input = &input,
+    };
+
+    glfwSetWindowUserPointer(window, &windowData);
+    glfwSetKeyCallback(window, WindowKeyCallback);
 
     sg_desc sokolGfxDescriptor = (sg_desc){
         .logger.func = slog_func,
@@ -79,6 +100,7 @@ int main(void)
 
     Parser parser = ParserNew(LexerNew(data, dataCount), font);
     Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
+    Cursor cursor = CursorNew(rootBlock);
 
     BlockUpdateTree(rootBlock, 0, 0);
 
@@ -88,6 +110,35 @@ int main(void)
 
     while (!glfwWindowShouldClose(window))
     {
+        // Update:
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_E))
+        {
+            CursorUp(&cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_D))
+        {
+            CursorDown(&cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_S))
+        {
+            CursorLeft(&cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_F))
+        {
+            CursorRight(&cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_BACKSPACE))
+        {
+            CursorDeleteHere(&cursor, rootBlock);
+        }
+
+        InputUpdate(&input);
+
+        // Draw:
         int width, height;
         glfwGetFramebufferSize(window, &width, &height);
 
@@ -108,7 +159,7 @@ int main(void)
         // DrawText("ijkl", 10, 0, font);
 
         // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
-        BlockDraw(rootBlock, NULL, 0, 0, height, font, &theme);
+        BlockDraw(rootBlock, cursor.block, 0, 0, height, font, &theme);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, width, height);
@@ -126,6 +177,8 @@ int main(void)
     free(data);
 
     BlockKindsDeinit();
+
+    InputDelete(&input);
 
     sgp_shutdown();
     sg_shutdown();

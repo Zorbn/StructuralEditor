@@ -43,6 +43,9 @@ BlockKind BlockKindNew(BlockKind blockKind)
     return blockKind;
 }
 
+static const int32_t BlockPadding = 6;
+static const int32_t LineWidth = 3;
+
 BlockKind BlockKinds[BlockKindIdCount];
 
 void BlockKindsInit(void)
@@ -234,6 +237,7 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
     *block = (Block){
         .kindId = kindId,
         .parent = parent,
+        .childI = childI,
     };
 
     if (kindId == BlockKindIdIdentifier)
@@ -242,25 +246,18 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
     }
 
     block->data.parent = (BlockParentData){
-        .childrenCapacity = kind->defaultChildrenCount,
-        .childrenCount = kind->defaultChildrenCount,
+        .children = ListNew_BlockPointer(kind->defaultChildrenCount),
     };
 
-    if (kind->defaultChildrenCount > 0)
+    for (int32_t i = 0; i < kind->defaultChildrenCount; i++)
     {
-        block->data.parent.children = malloc(sizeof(Block *) * kind->defaultChildrenCount);
-        assert(block->children);
-
-        for (int32_t i = 0; i < kind->defaultChildrenCount; i++)
+        if (kind->defaultChildren[i].isPin)
         {
-            if (kind->defaultChildren[i].isPin)
-            {
-                block->data.parent.children[i] = BlockNew(BlockKindIdPin, block, i);
-            }
-            else
-            {
-                block->data.parent.children[i] = BlockNew(kind->defaultChildren[i].blockKindId, block, i);
-            }
+            ListPush_BlockPointer(&block->data.parent.children, BlockNew(BlockKindIdPin, block, i));
+        }
+        else
+        {
+            ListPush_BlockPointer(&block->data.parent.children, BlockNew(kind->defaultChildren[i].blockKindId, block, i));
         }
     }
 
@@ -275,12 +272,12 @@ void BlockDelete(Block *block)
     }
     else
     {
-        for (int32_t i = 0; i < block->data.parent.childrenCount; i++)
+        for (int32_t i = 0; i < block->data.parent.children.count; i++)
         {
-            BlockDelete(block->data.parent.children[i]);
+            BlockDelete(block->data.parent.children.data[i]);
         }
 
-        free(block->data.parent.children);
+        ListDelete_BlockPointer(&block->data.parent.children);
     }
 
     free(block);
@@ -293,7 +290,7 @@ int32_t BlockGetChildrenCount(Block *block)
         return 0;
     }
 
-    return block->data.parent.childrenCount;
+    return block->data.parent.children.count;
 }
 
 char *BlockGetText(Block *block)
@@ -319,32 +316,34 @@ void BlockGetTextSize(Block *block, int32_t *width, int32_t *height)
     *height = BlockKinds[block->kindId].textHeight;
 }
 
+DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI)
+{
+    const BlockKind *kind = &BlockKinds[block->kindId];
+    childI = Int32Min(childI, kind->defaultChildrenCount - 1);
+
+    return &kind->defaultChildren[childI];
+}
+
 // Frees the old child if it exists, expands this block's children array as necessary.
-void BlockReplaceChild(Block *block, Block *child, int32_t i)
+void BlockReplaceChild(Block *block, Block *child, int32_t childI)
 {
     assert(block->kindId != BlockKindIdIdentifier);
 
     BlockParentData *parentData = &block->data.parent;
 
-    if (i >= parentData->childrenCount)
+    if (childI >= parentData->children.count)
     {
-        if (i >= parentData->childrenCapacity)
-        {
-            parentData->childrenCapacity *= 2;
-            parentData->children = realloc(parentData->children, sizeof(Block *) * parentData->childrenCapacity);
-            assert(block->children);
-        }
-
-        i = parentData->childrenCount;
-        parentData->childrenCount++;
+        childI = parentData->children.count;
+        ListPush_BlockPointer(&parentData->children, (BlockPointer){0});
     }
     else
     {
-        BlockDelete(parentData->children[i]);
+        BlockDelete(parentData->children.data[childI]);
     }
 
-    parentData->children[i] = child;
+    parentData->children.data[childI] = child;
     child->parent = block;
+    child->childI = childI;
 }
 
 uint64_t BlockCountAll(Block *block)
@@ -353,15 +352,19 @@ uint64_t BlockCountAll(Block *block)
 
     for (int32_t i = 0; i < BlockGetChildrenCount(block); i++)
     {
-        count += BlockCountAll(block->data.parent.children[i]);
+        count += BlockCountAll(block->data.parent.children.data[i]);
     }
 
     return count;
 }
 
-static const int32_t BlockPadding = 6;
-static const int32_t LineWidth = 3;
-
+/* TODO:
+ * Look into this optimization (might not be necessary, seems pretty fast already.)
+ * Maybe pause the updates when we reach blocks that are offscreen, and resume them if those blocks become onscreen?
+ * This would probably involve changing the solution to use a stack instead of recursion, then when the tree is updated,
+ * like the situations we would currently call BlockUpdateTree, reset the stack and start from the top, otherwise,
+ * check every frame and process the updates from where we left off until we reach offscreen and can pause again.
+*/
 void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 {
     block->x = x;
@@ -383,7 +386,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
         y += textHeight;
     }
 
-    BlockKind *kind = &BlockKinds[block->kindId];
+    const BlockKind *kind = &BlockKinds[block->kindId];
 
     if (!kind->isTextInfix)
     {
@@ -397,7 +400,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
     {
         for (int32_t i = 0; i < childrenCount; i++)
         {
-            Block *child = block->data.parent.children[i];
+            Block *child = block->data.parent.children.data[i];
 
             BlockUpdateTree(child, x, y);
 
@@ -414,7 +417,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 
         for (int32_t i = 0; i < childrenCount; i++)
         {
-            Block *child = block->data.parent.children[i];
+            Block *child = block->data.parent.children.data[i];
 
             BlockUpdateTree(child, x, y);
 
@@ -443,10 +446,8 @@ static Color BlockGetDepthColor(int32_t depth, Theme *theme)
     {
         return theme->evenColor;
     }
-    else
-    {
-        return theme->oddColor;
-    }
+
+    return theme->oddColor;
 }
 
 static void DrawRect(int32_t x, int32_t y, int32_t width, int32_t height)
@@ -468,7 +469,7 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
     while (minI != maxI)
     {
         int32_t i = (minI + maxI) / 2;
-        Block *child = block->data.parent.children[i];
+        Block *child = block->data.parent.children.data[i];
 
         if (child->y + child->height < minY)
         {
@@ -515,7 +516,7 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, in
         textY -= BlockPadding;
     }
 
-    BlockKind *kind = &BlockKinds[block->kindId];
+    const BlockKind *kind = &BlockKinds[block->kindId];
     char *text = BlockGetText(block);
 
     // TODO: Also do this is the text is infix, but
@@ -536,7 +537,7 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, in
 
     for (int32_t i = firstVisibleI; i < childrenCount; i++)
     {
-        Block *child = block->data.parent.children[i];
+        Block *child = block->data.parent.children.data[i];
 
         if (child->y > maxY)
         {

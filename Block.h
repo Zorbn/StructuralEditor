@@ -2,6 +2,7 @@
 
 #include "Font.h"
 #include "Theme.h"
+#include "List.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -60,11 +61,12 @@ BlockKind BlockKinds[BlockKindIdCount];
 
 typedef struct Block Block;
 
+typedef Block *BlockPointer;
+ListDefine(BlockPointer);
+
 typedef struct BlockParentData
 {
-    Block **children;
-    int32_t childrenCount;
-    int32_t childrenCapacity;
+    List_BlockPointer children;
 } BlockParentData;
 
 typedef struct BlockIdentifierData
@@ -91,6 +93,7 @@ typedef struct Block
     int32_t width;
     int32_t height;
 
+    int32_t childI;
     BlockKindId kindId;
 } Block;
 
@@ -103,7 +106,8 @@ void BlockDelete(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
-void BlockReplaceChild(Block *block, Block *child, int32_t i);
+DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI);
+void BlockReplaceChild(Block *block, Block *child, int32_t childI);
 uint64_t BlockCountAll(Block *block);
 void BlockUpdateTree(Block *block, int32_t x, int32_t y);
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme);
