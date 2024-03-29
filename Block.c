@@ -46,14 +46,14 @@ BlockKind BlockKindNew(BlockKind blockKind)
 static const int32_t BlockPadding = 6;
 static const int32_t LineWidth = 3;
 
-const PinKindInsertBlocks PinBlocks[] = {
+const PinKindInsertBlocks PinInsertBlocks[] = {
     [PinKindExpression] = {
         .blockKindIds = (BlockKindId[]){
             BlockKindIdLambdaFunction,
             BlockKindIdAdd,
             BlockKindIdCall,
         },
-        .blockIdCount = 3,
+        .blockKindIdCount = 3,
     },
     [PinKindStatement] = {
         .blockKindIds = (BlockKindId[]){
@@ -63,16 +63,16 @@ const PinKindInsertBlocks PinBlocks[] = {
             BlockKindIdIf,
             BlockKindIdCall,
         },
-        .blockIdCount = 5,
+        .blockKindIdCount = 5,
     },
     [PinKindIdentifier] = {
         .blockKindIds = (BlockKindId[]){
             BlockKindIdIdentifier,
         },
-        .blockIdCount = 1,
+        .blockKindIdCount = 1,
     },
     [PinKindNone] = {
-        .blockIdCount = 0,
+        .blockKindIdCount = 0,
     },
 };
 
@@ -294,6 +294,20 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
     return block;
 }
 
+Block *BlockNewIdentifier(char *text, int32_t textCount, Font *font, Block *parent, int32_t childI)
+{
+    Block *block = BlockNew(BlockKindIdIdentifier, parent, childI);
+    BlockIdentifierData *identifierData = &block->data.identifier;
+
+    identifierData->text = malloc(textCount + 1);
+    strncpy(identifierData->text, text, textCount);
+    identifierData->text[textCount] = '\0';
+
+    GetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, font);
+
+    return block;
+}
+
 void BlockDelete(Block *block)
 {
     if (block->kindId == BlockKindIdIdentifier)
@@ -388,13 +402,11 @@ uint64_t BlockCountAll(Block *block)
     return count;
 }
 
-/* TODO:
- * Look into this optimization (might not be necessary, seems pretty fast already.)
- * Maybe pause the updates when we reach blocks that are offscreen, and resume them if those blocks become onscreen?
- * This would probably involve changing the solution to use a stack instead of recursion, then when the tree is updated,
- * like the situations we would currently call BlockUpdateTree, reset the stack and start from the top, otherwise,
- * check every frame and process the updates from where we left off until we reach offscreen and can pause again.
-*/
+// TODO: Have a Tree struct that contains a reference to the root block, it should have a method TreeMarkDirty which will
+// be used instead of calling BlockUpdateTree on the root node. Have a method TreeUpdate which is called once per frame,
+// and calls BlockUpdateTree on the root node if it is dirty, the unmarks the dirty flag. This is to prevent multiple
+// redundant calls to BlockUpdateTree per frame, when it really only needs to be called once before drawing if the tree
+// was modified.
 void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 {
     block->x = x;

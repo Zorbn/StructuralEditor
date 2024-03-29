@@ -39,7 +39,7 @@ typedef enum BlockKindId
 typedef struct PinKindInsertBlocks
 {
     BlockKindId *blockKindIds;
-    int32_t blockIdCount;
+    int32_t blockKindIdCount;
 } PinKindInsertBlocks;
 
 typedef struct DefaultChildKind
@@ -63,7 +63,7 @@ typedef struct BlockKind
     int32_t defaultChildrenCount;
 } BlockKind;
 
-const PinKindInsertBlocks PinBlocks[];
+const PinKindInsertBlocks PinInsertBlocks[];
 BlockKind BlockKinds[BlockKindIdCount];
 
 typedef struct Block Block;
@@ -109,6 +109,7 @@ void BlockKindsDeinit(void);
 void BlockKindsUpdateTextSize(Font *font);
 
 Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI);
+Block *BlockNewIdentifier(char *text, int32_t textLength, Font *font, Block *parent, int32_t childI);
 void BlockDelete(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);

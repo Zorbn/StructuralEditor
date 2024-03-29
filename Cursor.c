@@ -1,10 +1,187 @@
 #include "Cursor.h"
 
+#include <GLFW/glfw3.h>
+
 Cursor CursorNew(Block *block)
 {
     return (Cursor){
         .block = block,
+        .insertText = ListNew_char(16),
+        .state = CursorStateMove,
     };
+}
+
+void CursorDelete(Cursor *cursor)
+{
+    ListDelete_char(&cursor->insertText);
+}
+
+static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection)
+{
+    cursor->state = CursorStateInsert;
+    cursor->insertDirection = insertDirection;
+
+    const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
+    Block *parent = cursor->block->parent;
+
+    if (parent && !defaultChildKind->isPin)
+    {
+        int32_t childI = cursor->block->childI;
+
+        BlockReplaceChild(parent, BlockNew(defaultChildKind->blockKindId, parent, childI), childI);
+        cursor->state = CursorStateMove;
+    }
+}
+
+static void CursorUpdateMove(Cursor *cursor, Input *input, Block *rootBlock)
+{
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_E))
+    {
+        CursorUp(cursor);
+    }
+
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_D))
+    {
+        CursorDown(cursor);
+    }
+
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_S))
+    {
+        CursorLeft(cursor);
+    }
+
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_F))
+    {
+        CursorRight(cursor);
+    }
+
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_BACKSPACE))
+    {
+        CursorDeleteHere(cursor, rootBlock);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_SPACE))
+    {
+        CursorStartInsert(cursor, InsertDirectionCenter);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_I))
+    {
+        CursorStartInsert(cursor, InsertDirectionUp);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_K))
+    {
+        CursorStartInsert(cursor, InsertDirectionDown);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_J))
+    {
+        CursorStartInsert(cursor, InsertDirectionLeft);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_L))
+    {
+        CursorStartInsert(cursor, InsertDirectionRight);
+    }
+}
+
+static bool ListMatchesString(List_char *list, char *string)
+{
+    if (!string)
+    {
+        return false;
+    }
+
+    for (int32_t i = 0; i < list->count; i++)
+    {
+        if (string[i] == '\0' || list->data[i] != string[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, Font *font)
+{
+    bool isCanceling = InputIsButtonPressed(input, GLFW_KEY_ESCAPE);
+    bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
+
+    const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
+    Block *parent = cursor->block->parent;
+
+    if (isConfirming && parent && defaultChildKind->isPin)
+    {
+        const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[defaultChildKind->pinKind];
+
+        for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
+        {
+            BlockKindId kindId = insertBlocks->blockKindIds[i];
+            const BlockKind *kind = &BlockKinds[kindId];
+
+            if (!ListMatchesString(&cursor->insertText, kind->searchText))
+            {
+                continue;
+            }
+
+            int32_t childI = cursor->block->childI;
+            Block *block = BlockNew(kindId, parent, childI);
+
+            BlockReplaceChild(parent, block, childI);
+            cursor->block = block;
+            BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
+
+            cursor->state = CursorStateMove;
+            ListReset_char(&cursor->insertText);
+
+            return;
+        }
+
+        if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
+        {
+            int32_t childI = cursor->block->childI;
+            Block *block = BlockNewIdentifier(cursor->insertText.data, cursor->insertText.count, font, parent, childI);
+
+            BlockReplaceChild(parent, block, childI);
+            cursor->block = block;
+            BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
+
+            cursor->state = CursorStateMove;
+            ListReset_char(&cursor->insertText);
+
+            return;
+        }
+    }
+
+    if (isCanceling)
+    {
+        cursor->state = CursorStateMove;
+        ListReset_char(&cursor->insertText);
+
+        return;
+    }
+
+    for (int32_t i = 0; i < input->typedChars.count; i++)
+    {
+        ListPush_char(&cursor->insertText, input->typedChars.data[i]);
+    }
+}
+
+void CursorUpdate(Cursor *cursor, Input *input, Block *rootBlock, Font *font)
+{
+    switch (cursor->state)
+    {
+        case CursorStateMove: {
+            CursorUpdateMove(cursor, input, rootBlock);
+            break;
+        }
+        case CursorStateInsert: {
+            CursorUpdateInsert(cursor, input, rootBlock, font);
+            break;
+        }
+    }
 }
 
 void CursorAscend(Cursor *cursor)
@@ -63,7 +240,8 @@ void CursorPrevious(Cursor *cursor)
     CursorMove(cursor, -1);
 }
 
-static void CursorMoveHorizontalOrVertical(Cursor *cursor, void (*horizontalMovement)(Cursor *cursor), void (*verticalMovement)(Cursor *cursor))
+static void CursorMoveHorizontalOrVertical(
+    Cursor *cursor, void (*horizontalMovement)(Cursor *cursor), void (*verticalMovement)(Cursor *cursor))
 {
     BlockKind *parentKind = &BlockKinds[cursor->block->kindId];
 
@@ -140,7 +318,8 @@ void CursorDeleteHere(Cursor *cursor, Block *rootBlock)
     }
     else
     {
-        // This is a default child, so it needs to be preserved. Replace it with it's default value instead of deleting it.
+        // This is a default child, so it needs to be preserved. Replace it with it's default value instead of deleting
+        // it.
         DefaultChildKind *defaultKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
 
         Block *parent = cursor->block->parent;

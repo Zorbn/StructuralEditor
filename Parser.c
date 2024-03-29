@@ -308,16 +308,8 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
 Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI)
 {
     Token text = LexerNext(&parser->lexer);
-
-    Block *block = BlockNew(BlockKindIdIdentifier, parent, childI);
-    BlockIdentifierData *identifierData = &block->data.identifier;
-
-    int32_t textLength = text.end - text.start;
-    identifierData->text = malloc(textLength + 1);
-    strncpy(identifierData->text, parser->lexer.data + text.start, textLength);
-    identifierData->text[textLength] = '\0';
-
-    GetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, parser->font);
+    int32_t textCount = text.end - text.start;
+    Block *block = BlockNewIdentifier(parser->lexer.data + text.start, textCount, parser->font, parent, childI);
 
     return block;
 }

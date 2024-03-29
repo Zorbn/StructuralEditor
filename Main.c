@@ -143,44 +143,7 @@ int main(void)
     while (!glfwWindowShouldClose(window))
     {
         // Update:
-        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_E))
-        {
-            CursorUp(&cursor);
-        }
-
-        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_D))
-        {
-            CursorDown(&cursor);
-        }
-
-        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_S))
-        {
-            CursorLeft(&cursor);
-        }
-
-        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_F))
-        {
-            CursorRight(&cursor);
-        }
-
-        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_BACKSPACE))
-        {
-            CursorDeleteHere(&cursor, rootBlock);
-        }
-
-        if (input.typedChars.count > 0)
-        {
-            printf("typed: ");
-
-            for (int32_t i = 0; i < input.typedChars.count; i++)
-            {
-                printf("%c ", input.typedChars.data[i]);
-
-            }
-
-            printf("\n");
-        }
-
+        CursorUpdate(&cursor, &input, rootBlock, font);
         InputUpdate(&input);
 
         // Draw:
@@ -217,6 +180,7 @@ int main(void)
         glfwPollEvents();
     }
 
+    CursorDelete(&cursor);
     BlockDelete(rootBlock);
     FontDelete(font);
     free(data);
