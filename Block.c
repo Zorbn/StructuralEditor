@@ -46,6 +46,36 @@ BlockKind BlockKindNew(BlockKind blockKind)
 static const int32_t BlockPadding = 6;
 static const int32_t LineWidth = 3;
 
+const PinKindInsertBlocks PinBlocks[] = {
+    [PinKindExpression] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdLambdaFunction,
+            BlockKindIdAdd,
+            BlockKindIdCall,
+        },
+        .blockIdCount = 3,
+    },
+    [PinKindStatement] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdAssignment,
+            BlockKindIdDo,
+            BlockKindIdFunction,
+            BlockKindIdIf,
+            BlockKindIdCall,
+        },
+        .blockIdCount = 5,
+    },
+    [PinKindIdentifier] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdIdentifier,
+        },
+        .blockIdCount = 1,
+    },
+    [PinKindNone] = {
+        .blockIdCount = 0,
+    },
+};
+
 BlockKind BlockKinds[BlockKindIdCount];
 
 void BlockKindsInit(void)

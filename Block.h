@@ -36,6 +36,12 @@ typedef enum BlockKindId
     BlockKindIdCount,
 } BlockKindId;
 
+typedef struct PinKindInsertBlocks
+{
+    BlockKindId *blockKindIds;
+    int32_t blockIdCount;
+} PinKindInsertBlocks;
+
 typedef struct DefaultChildKind
 {
     bool isPin;
@@ -57,6 +63,7 @@ typedef struct BlockKind
     int32_t defaultChildrenCount;
 } BlockKind;
 
+const PinKindInsertBlocks PinBlocks[];
 BlockKind BlockKinds[BlockKindIdCount];
 
 typedef struct Block Block;
