@@ -6,6 +6,7 @@ Input InputNew(void)
         .heldButtons = ListNew_int32_t(16),
         .pressedButtons = ListNew_int32_t(16),
         .repeatButtons = ListNew_int32_t(16),
+        .typedChars = ListNew_char(16),
     };
 }
 
@@ -67,6 +68,7 @@ void InputUpdate(Input *input)
 {
     ListReset_int32_t(&input->pressedButtons);
     ListReset_int32_t(&input->repeatButtons);
+    ListReset_char(&input->typedChars);
 }
 
 bool InputIsButtonHeld(Input *input, int32_t button)
@@ -94,4 +96,5 @@ void InputDelete(Input *input)
     ListDelete_int32_t(&input->heldButtons);
     ListDelete_int32_t(&input->pressedButtons);
     ListDelete_int32_t(&input->repeatButtons);
+    ListDelete_char(&input->typedChars);
 }

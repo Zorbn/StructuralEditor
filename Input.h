@@ -8,12 +8,14 @@
 #include <stdbool.h>
 
 ListDefine(int32_t);
+ListDefine(char);
 
 typedef struct Input
 {
-    struct List_int32_t heldButtons;
-    struct List_int32_t pressedButtons;
-    struct List_int32_t repeatButtons;
+    List_int32_t heldButtons;
+    List_int32_t pressedButtons;
+    List_int32_t repeatButtons;
+    List_char typedChars;
 } Input;
 
 Input InputNew(void);

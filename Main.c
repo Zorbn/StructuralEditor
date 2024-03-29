@@ -1,21 +1,21 @@
 #define _CRTDBG_MAP_ALLOC
-#include <stdlib.h>
 #include <crtdbg.h>
+#include <stdlib.h>
 
 #define SOKOL_GLCORE33
 #include <sokol_gfx.h>
-#include <sokol_log.h>
 #include <sokol_gp.h>
+#include <sokol_log.h>
 
 #define GLFW_INCLUDE_NONE
 #include "GLFW/glfw3.h"
 
-#include "Font.h"
-#include "Parser.h"
 #include "Block.h"
-#include "Theme.h"
 #include "Cursor.h"
+#include "Font.h"
 #include "Input.h"
+#include "Parser.h"
+#include "Theme.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -27,10 +27,41 @@ typedef struct WindowData
     Input *input;
 } WindowData;
 
-void WindowKeyCallback(GLFWwindow* window, int key, int scanCode, int action, int modifiers)
+static void WindowKeyCallback(GLFWwindow *window, int key, int scanCode, int action, int modifiers)
 {
     WindowData *windowData = glfwGetWindowUserPointer(window);
     InputUpdateButton(windowData->input, key, action);
+}
+
+static void Utf32ToUtf8(List_char *destination, uint32_t codePoint)
+{
+    if (codePoint <= 0x7f)
+    {
+        ListPush_char(destination, (char)codePoint);
+    }
+    else if (codePoint <= 0x7ff)
+    {
+        ListPush_char(destination, 0xc0 | (char)(codePoint >> 6));
+    }
+    else if (codePoint <= 0xffff)
+    {
+        ListPush_char(destination, 0xe0 | (char)(codePoint >> 12));
+        ListPush_char(destination, 0x80 | (char)((codePoint >> 6) & 0x3f));
+        ListPush_char(destination, 0x80 | (char)(codePoint & 0x3f));
+    }
+    else if (codePoint <= 0x10ffff)
+    {
+        ListPush_char(destination, 0xf0 | (char)(codePoint >> 18));
+        ListPush_char(destination, 0x80 | (char)((codePoint >> 12) & 0x3f));
+        ListPush_char(destination, 0x80 | (char)((codePoint >> 6) & 0x3f));
+        ListPush_char(destination, 0x80 | (char)(codePoint & 0x3f));
+    }
+}
+
+static void WindowCharCallback(GLFWwindow *window, uint32_t codePoint)
+{
+    WindowData *windowData = glfwGetWindowUserPointer(window);
+    Utf32ToUtf8(&windowData->input->typedChars, codePoint);
 }
 
 int main(void)
@@ -52,6 +83,7 @@ int main(void)
 
     glfwSetWindowUserPointer(window, &windowData);
     glfwSetKeyCallback(window, WindowKeyCallback);
+    glfwSetCharCallback(window, WindowCharCallback);
 
     sg_desc sokolGfxDescriptor = (sg_desc){
         .logger.func = slog_func,
@@ -134,6 +166,19 @@ int main(void)
         if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_BACKSPACE))
         {
             CursorDeleteHere(&cursor, rootBlock);
+        }
+
+        if (input.typedChars.count > 0)
+        {
+            printf("typed: ");
+
+            for (int32_t i = 0; i < input.typedChars.count; i++)
+            {
+                printf("%c ", input.typedChars.data[i]);
+
+            }
+
+            printf("\n");
         }
 
         InputUpdate(&input);
