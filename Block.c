@@ -588,7 +588,7 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, in
 
         if (i < childrenCount - 1 && kind->isTextInfix)
         {
-            DrawText(text, block->x + block->width, textY, font);
+            DrawText(text, child->x + child->width, textY, font);
         }
     }
 }

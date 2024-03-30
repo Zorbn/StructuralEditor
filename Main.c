@@ -36,6 +36,7 @@
  * TODO, New features:
  * Auto-complete for insert mode,
  * Search for text in tree,
+ * Support multiple files,
  *
  * TODO, Ideas:
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
@@ -92,7 +93,7 @@ static void WindowSizeCallback(GLFWwindow *window, int32_t width, int32_t height
     windowData->camera->height = (float)height;
 }
 
-int main(void)
+int main(int argumentCount, char **arguments)
 {
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -136,10 +137,17 @@ int main(void)
     char *data = NULL;
     int32_t dataCount = 0;
     {
-        FILE *file = fopen("save.lua", "r");
+        char *path = "save.lua";
+
+        if (argumentCount >= 2)
+        {
+            path = arguments[1];
+        }
+
+        FILE *file = fopen(path, "r");
         if (!file)
         {
-            puts("Expected \"save.lua\"");
+            printf("Couldn't open file \"%s\"", path);
             exit(EXIT_FAILURE);
         }
 
