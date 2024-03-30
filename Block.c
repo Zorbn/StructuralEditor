@@ -359,7 +359,7 @@ void BlockGetTextSize(Block *block, int32_t *width, int32_t *height)
 DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI)
 {
     const BlockKind *kind = &BlockKinds[block->kindId];
-    childI = Int32Min(childI, kind->defaultChildrenCount - 1);
+    childI = MathInt32Min(childI, kind->defaultChildrenCount - 1);
 
     return &kind->defaultChildren[childI];
 }
@@ -461,7 +461,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
             x += child->width + BlockPadding;
             y += child->height + BlockPadding;
 
-            maxWidth = Int32Max(maxWidth, x - block->x);
+            maxWidth = MathInt32Max(maxWidth, x - block->x);
             x = startX;
         }
     }
@@ -482,10 +482,10 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
                 x += textWidth + BlockPadding;
             }
 
-            maxHeight = Int32Max(maxHeight, child->height + BlockPadding);
+            maxHeight = MathInt32Max(maxHeight, child->height + BlockPadding);
         }
 
-        maxWidth = Int32Max(maxWidth, x - block->x);
+        maxWidth = MathInt32Max(maxWidth, x - block->x);
         x = startX;
         y += maxHeight;
     }

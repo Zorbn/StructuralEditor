@@ -1,6 +1,6 @@
 #include "Cursor.h"
 #include "Shapes.h"
-#include "Geometry.h"
+#include "Math.h"
 
 #include <GLFW/glfw3.h>
 
@@ -278,10 +278,10 @@ void CursorDraw(Cursor *cursor, Theme *theme, float deltaTime)
     }
 
     float delta = deltaTime * AnimationSpeed;
-    cursor->x = GeometryLerp(cursor->x, targetX, delta);
-    cursor->y = GeometryLerp(cursor->y, targetY, delta);
-    cursor->width = GeometryLerp(cursor->width, targetWidth, delta);
-    cursor->height = GeometryLerp(cursor->height, targetHeight, delta);
+    cursor->x = MathLerp(cursor->x, targetX, delta);
+    cursor->y = MathLerp(cursor->y, targetY, delta);
+    cursor->width = MathLerp(cursor->width, targetWidth, delta);
+    cursor->height = MathLerp(cursor->height, targetHeight, delta);
 
     DrawRect(cursor->x, cursor->y, cursor->width, LineWidth);
     DrawRect(cursor->x, cursor->y + cursor->height - LineWidth, cursor->width, LineWidth);

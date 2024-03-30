@@ -16,6 +16,8 @@
 #include "Input.h"
 #include "Parser.h"
 #include "Theme.h"
+#include "Camera.h"
+#include "Math.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -25,6 +27,7 @@
 typedef struct WindowData
 {
     Input *input;
+    Camera *camera;
 } WindowData;
 
 static void WindowKeyCallback(GLFWwindow *window, int key, int scanCode, int action, int modifiers)
@@ -64,6 +67,13 @@ static void WindowCharCallback(GLFWwindow *window, uint32_t codePoint)
     Utf32ToUtf8(&windowData->input->typedChars, codePoint);
 }
 
+static void WindowSizeCallback(GLFWwindow *window, int32_t width, int32_t height)
+{
+    WindowData *windowData = glfwGetWindowUserPointer(window);
+    windowData->camera->width = (float)width;
+    windowData->camera->height = (float)height;
+}
+
 int main(void)
 {
     glfwInit();
@@ -77,13 +87,23 @@ int main(void)
     glfwSwapInterval(1);
 
     Input input = InputNew();
+    Camera camera = CameraNew();
+
     WindowData windowData = (WindowData){
         .input = &input,
+        .camera = &camera,
     };
 
     glfwSetWindowUserPointer(window, &windowData);
     glfwSetKeyCallback(window, WindowKeyCallback);
     glfwSetCharCallback(window, WindowCharCallback);
+    glfwSetWindowSizeCallback(window, WindowSizeCallback);
+
+    {
+        int32_t width, height;
+        glfwGetWindowSize(window, &width, &height);
+        WindowSizeCallback(window, width, height);
+    }
 
     sg_desc sokolGfxDescriptor = (sg_desc){
         .logger.func = slog_func,
@@ -150,14 +170,14 @@ int main(void)
         lastFrameTime = frameTime;
 
         CursorUpdate(&cursor, &input, rootBlock, font);
+        CameraUpdate(&camera, &cursor, rootBlock, deltaTime);
         InputUpdate(&input);
 
         // Draw:
-        int width, height;
-        glfwGetFramebufferSize(window, &width, &height);
+        sgp_begin((int32_t)camera.width, (int32_t)camera.height);
+        sgp_viewport(0, 0, (int32_t)camera.width, (int32_t)camera.height);
 
-        sgp_begin(width, height);
-        sgp_viewport(0, 0, width, height);
+        sgp_translate(MathFloatFloor(-camera.x), MathFloatFloor(-camera.y));
 
         // sgp_set_color(0.1f, 0.1f, 0.1f, 1.0f);
         ColorSet(theme.backgroundColor);
@@ -173,11 +193,11 @@ int main(void)
         // DrawText("ijkl", 10, 0, font);
 
         // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
-        BlockDraw(rootBlock, cursor.block, 0, 0, height, font, &theme);
+        BlockDraw(rootBlock, cursor.block, 0, (int32_t)camera.y, (int32_t)(camera.y + camera.height), font, &theme);
         CursorDraw(&cursor, &theme, deltaTime);
 
         sg_pass_action passAction = {0};
-        sg_begin_default_pass(&passAction, width, height);
+        sg_begin_default_pass(&passAction, (int32_t)camera.width, (int32_t)camera.height);
         sgp_flush();
         sgp_end();
         sg_end_pass();
