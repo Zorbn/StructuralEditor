@@ -20,6 +20,7 @@ Cursor CursorNew(Block *block)
 void CursorDelete(Cursor *cursor)
 {
     ListDelete_char(&cursor->insertText);
+    BlockDelete(cursor->clipboardBlock);
 }
 
 static bool CursorIsVertical(Cursor *cursor)
@@ -114,6 +115,34 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, B
     }
 }
 
+static void CursorCopy(Cursor *cursor)
+{
+    free(cursor->clipboardBlock);
+    cursor->clipboardBlock = BlockCopy(cursor->block, NULL, 0);
+}
+
+static void CursorCut(Cursor *cursor, Block *rootBlock)
+{
+    CursorCopy(cursor);
+    CursorDeleteHere(cursor, rootBlock);
+}
+
+static void CursorPaste(Cursor *cursor, Block *rootBlock)
+{
+    if (!cursor->block->parent)
+    {
+        return;
+    }
+
+    BlockParentData *parentParentData = &cursor->block->parent->data.parent;
+    Block *pastedBlock = BlockCopy(cursor->clipboardBlock, cursor->block->parent, cursor->block->childI);
+
+    BlockReplaceChild(cursor->block->parent, pastedBlock, cursor->block->childI);
+    BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
+
+    cursor->block = pastedBlock;
+}
+
 static void CursorUpdateMove(Cursor *cursor, Input *input, Block *rootBlock)
 {
     if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_E))
@@ -165,6 +194,21 @@ static void CursorUpdateMove(Cursor *cursor, Input *input, Block *rootBlock)
     {
         CursorStartInsert(cursor, InsertDirectionRight, rootBlock);
     }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_X))
+    {
+        CursorCut(cursor, rootBlock);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_C))
+    {
+        CursorCopy(cursor);
+    }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_V))
+    {
+        CursorPaste(cursor, rootBlock);
+    }
 }
 
 static bool ListMatchesString(List_char *list, char *string)
@@ -182,7 +226,7 @@ static bool ListMatchesString(List_char *list, char *string)
         }
     }
 
-    return true;
+    return string[list->count] == '\0';
 }
 
 static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, Font *font)

@@ -21,6 +21,7 @@ typedef enum CursorState
 typedef struct Cursor
 {
     Block *block;
+    Block *clipboardBlock;
 
     List_char insertText;
     InsertDirection insertDirection;

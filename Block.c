@@ -253,6 +253,9 @@ void BlockKindsUpdateTextSize(Font *font)
     }
 }
 
+// TODO: Have a way to create a block without creating it's children,
+// this could be used in the parser when we know we're going to
+// overwrite the new block's children anyway.
 Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
 {
     const BlockKind *kind = &BlockKinds[kindId];
@@ -300,6 +303,36 @@ Block *BlockNewIdentifier(char *text, int32_t textCount, Font *font, Block *pare
     identifierData->text[textCount] = '\0';
 
     GetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, font);
+
+    return block;
+}
+
+Block *BlockCopy(Block *other, Block *parent, int32_t childI)
+{
+    Block *block = malloc(sizeof(Block));
+    assert(block);
+
+    *block = *other;
+    block->parent = parent;
+
+    if (other->kindId == BlockKindIdIdentifier)
+    {
+        int32_t textLength = (int32_t)strlen(other->data.identifier.text);
+        block->data.identifier.text = calloc(textLength + 1, sizeof(char));
+        memcpy(block->data.identifier.text, other->data.identifier.text, textLength);
+
+        return block;
+    }
+
+    BlockParentData *parentData = &block->data.parent;
+    BlockParentData *otherParentData = &other->data.parent;
+
+    parentData->children = ListNew_BlockPointer(otherParentData->children.count);
+
+    for (int32_t i = 0; i < otherParentData->children.count; i++)
+    {
+        ListPush_BlockPointer(&parentData->children, BlockCopy(otherParentData->children.data[i], block, i));
+    }
 
     return block;
 }

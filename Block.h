@@ -112,6 +112,7 @@ void BlockKindsUpdateTextSize(Font *font);
 
 Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI);
 Block *BlockNewIdentifier(char *text, int32_t textLength, Font *font, Block *parent, int32_t childI);
+Block *BlockCopy(Block *other, Block *parent, int32_t childI);
 void BlockDelete(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);

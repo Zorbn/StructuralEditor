@@ -26,9 +26,9 @@
 
 /*
  * TODO, Missing things from the other version:
+ * Inserting nothing inserts a pin,
  * Zooming,
  * Shifting blocks,
- * Cut, copy, and pasting blocks,
  * Saving,
  * Text insert display,
  * Converting underscores to and from spaces,
