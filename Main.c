@@ -140,9 +140,15 @@ int main(void)
     printf("Block size individual: %zd\n", sizeof(Block));
     printf("Block kind size: %zd\n", sizeof(BlockKindId));
 
+    double lastFrameTime = glfwGetTime();
+
     while (!glfwWindowShouldClose(window))
     {
         // Update:
+        double frameTime = glfwGetTime();
+        float deltaTime = (float)(frameTime - lastFrameTime);
+        lastFrameTime = frameTime;
+
         CursorUpdate(&cursor, &input, rootBlock, font);
         InputUpdate(&input);
 
@@ -168,6 +174,7 @@ int main(void)
 
         // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
         BlockDraw(rootBlock, cursor.block, 0, 0, height, font, &theme);
+        CursorDraw(&cursor, &theme, deltaTime);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, width, height);

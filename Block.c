@@ -1,13 +1,10 @@
 #include "Block.h"
 #include "Math.h"
+#include "Shapes.h"
 
 #define _CRTDBG_MAP_ALLOC
 #include <crtdbg.h>
 #include <stdlib.h>
-
-#define SOKOL_GLCORE33
-#include <sokol_gfx.h>
-#include <sokol_gp.h>
 
 #include <assert.h>
 #include <stdio.h>
@@ -43,8 +40,7 @@ BlockKind BlockKindNew(BlockKind blockKind)
     return blockKind;
 }
 
-static const int32_t BlockPadding = 6;
-static const int32_t LineWidth = 3;
+const int32_t BlockPadding = 6;
 
 const PinKindInsertBlocks PinInsertBlocks[] = {
     [PinKindExpression] = {
@@ -508,12 +504,6 @@ static Color BlockGetDepthColor(int32_t depth, Theme *theme)
     return theme->oddColor;
 }
 
-static void DrawRect(int32_t x, int32_t y, int32_t width, int32_t height)
-{
-    // TODO: Soon this should use floats to allow quality scaling.
-    sgp_draw_filled_rect((float)x, (float)y, (float)width, (float)height);
-}
-
 static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, int32_t minY)
 {
     int32_t minI = 0;
@@ -544,14 +534,6 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
 
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme)
 {
-    if (block == cursorBlock)
-    {
-        ColorSet(theme->cursorColor);
-
-        DrawRect(block->x - BlockPadding - LineWidth, block->y - BlockPadding - LineWidth, block->width + LineWidth * 2,
-            block->height + LineWidth * 2);
-    }
-
     if (block->kindId == BlockKindIdPin)
     {
         ColorSet(theme->pinColor);
@@ -561,7 +543,7 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, in
         ColorSet(BlockGetDepthColor(depth, theme));
     }
 
-    DrawRect(block->x - BlockPadding, block->y - BlockPadding, block->width, block->height);
+    DrawRect((float)block->x - BlockPadding, (float)block->y - BlockPadding, (float)block->width, (float)block->height);
 
     ColorSet(theme->textColor);
 

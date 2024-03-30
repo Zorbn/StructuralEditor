@@ -19,14 +19,24 @@ typedef enum CursorState
 typedef struct Cursor
 {
     Block *block;
-    CursorState state;
-    InsertDirection insertDirection;
+
     List_char insertText;
+    InsertDirection insertDirection;
+
+    CursorState state;
+
+    float x;
+    float y;
+    float width;
+    float height;
+
+    bool isFirstDraw;
 } Cursor;
 
 Cursor CursorNew(Block *block);
 void CursorDelete(Cursor *cursor);
 void CursorUpdate(Cursor *cursor, Input *input, Block *rootBlock, Font *font);
+void CursorDraw(Cursor *cursor, Theme *theme, float deltaTime);
 void CursorAscend(Cursor *cursor);
 void CursorDescend(Cursor *cursor);
 void CursorNext(Cursor *cursor);

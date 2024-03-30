@@ -1,6 +1,11 @@
 #include "Cursor.h"
+#include "Shapes.h"
+#include "Geometry.h"
 
 #include <GLFW/glfw3.h>
+
+static const float LineWidth = 3;
+static const float AnimationSpeed = 30.0f;
 
 Cursor CursorNew(Block *block)
 {
@@ -8,6 +13,7 @@ Cursor CursorNew(Block *block)
         .block = block,
         .insertText = ListNew_char(16),
         .state = CursorStateMove,
+        .isFirstDraw = true,
     };
 }
 
@@ -248,6 +254,39 @@ void CursorUpdate(Cursor *cursor, Input *input, Block *rootBlock, Font *font)
         break;
     }
     }
+}
+
+void CursorDraw(Cursor *cursor, Theme *theme, float deltaTime)
+{
+    ColorSet(theme->cursorColor);
+
+    Block *block = cursor->block;
+
+    float targetX = block->x - BlockPadding - LineWidth;
+    float targetY = block->y - BlockPadding - LineWidth;
+    float targetWidth = block->width + LineWidth * 2;
+    float targetHeight = block->height + LineWidth * 2;
+
+    if (cursor->isFirstDraw)
+    {
+        cursor->x = targetX;
+        cursor->y = targetY;
+        cursor->width = targetWidth;
+        cursor->height = targetHeight;
+
+        cursor->isFirstDraw = false;
+    }
+
+    float delta = deltaTime * AnimationSpeed;
+    cursor->x = GeometryLerp(cursor->x, targetX, delta);
+    cursor->y = GeometryLerp(cursor->y, targetY, delta);
+    cursor->width = GeometryLerp(cursor->width, targetWidth, delta);
+    cursor->height = GeometryLerp(cursor->height, targetHeight, delta);
+
+    DrawRect(cursor->x, cursor->y, cursor->width, LineWidth);
+    DrawRect(cursor->x, cursor->y + cursor->height - LineWidth, cursor->width, LineWidth);
+    DrawRect(cursor->x, cursor->y, LineWidth, cursor->height);
+    DrawRect(cursor->x + cursor->width - LineWidth, cursor->y, LineWidth, cursor->height);
 }
 
 void CursorAscend(Cursor *cursor)
