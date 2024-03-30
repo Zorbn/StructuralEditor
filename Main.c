@@ -24,6 +24,24 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * TODO, Missing things from the other version:
+ * Zooming,
+ * Shifting blocks,
+ * Cut, copy, and pasting blocks,
+ * Saving,
+ * Text insert display,
+ * Converting underscores to and from spaces,
+ *
+ * TODO, New features:
+ * Auto-complete for insert mode,
+ * Search for text in tree,
+ *
+ * TODO, Ideas:
+ * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
+ * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
+ */
+
 typedef struct WindowData
 {
     Input *input;
