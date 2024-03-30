@@ -390,6 +390,22 @@ void BlockReplaceChild(Block *block, Block *child, int32_t childI)
     child->childI = childI;
 }
 
+void BlockInsertChild(Block *block, Block *child, int32_t childI)
+{
+    assert(block->kindId != BlockKindIdIdentifier);
+
+    BlockParentData *parentData = &block->data.parent;
+
+    for (int32_t i = childI; i < parentData->children.count; i++)
+    {
+        parentData->children.data[i]->childI += 1;
+    }
+
+    child->parent = block;
+    child->childI = childI;
+    ListInsert_BlockPointer(&parentData->children, child, childI);
+}
+
 uint64_t BlockCountAll(Block *block)
 {
     uint64_t count = 1;

@@ -116,6 +116,7 @@ char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
 DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI);
 void BlockReplaceChild(Block *block, Block *child, int32_t childI);
+void BlockInsertChild(Block *block, Block *child, int32_t childI);
 uint64_t BlockCountAll(Block *block);
 void BlockUpdateTree(Block *block, int32_t x, int32_t y);
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme);

@@ -16,20 +16,78 @@ void CursorDelete(Cursor *cursor)
     ListDelete_char(&cursor->insertText);
 }
 
+static bool CursorIsVertical(Cursor *cursor)
+{
+    BlockKind *parentKind = &BlockKinds[cursor->block->kindId];
+
+    if (cursor->block->parent)
+    {
+        parentKind = &BlockKinds[cursor->block->parent->kindId];
+    }
+
+    return parentKind->isVertical;
+}
+
+static bool CursorGetChildIndexInDirection(Cursor *cursor, int32_t *childI)
+{
+    *childI = cursor->block->childI;
+
+    if (CursorIsVertical(cursor))
+    {
+        if (cursor->insertDirection == InsertDirectionLeft && cursor->insertDirection == InsertDirectionRight)
+        {
+            return false;
+        }
+
+        if (cursor->insertDirection == InsertDirectionDown)
+        {
+            *childI += 1;
+        }
+    }
+    else
+    {
+        if (cursor->insertDirection == InsertDirectionUp && cursor->insertDirection == InsertDirectionDown)
+        {
+            return false;
+        }
+
+        if (cursor->insertDirection == InsertDirectionRight)
+        {
+            *childI += 1;
+        }
+    }
+
+    return true;
+}
+
 static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, Block *rootBlock)
 {
     cursor->state = CursorStateInsert;
     cursor->insertDirection = insertDirection;
+
+    int32_t childI;
+    if (!CursorGetChildIndexInDirection(cursor, &childI))
+    {
+        cursor->state = CursorStateMove;
+        return;
+    }
 
     const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
     Block *parent = cursor->block->parent;
 
     if (parent && !defaultChildKind->isPin)
     {
-        int32_t childI = cursor->block->childI;
-
         Block *block = BlockNew(defaultChildKind->blockKindId, parent, childI);
-        BlockReplaceChild(parent, block, childI);
+
+        if (cursor->insertDirection == InsertDirectionCenter)
+        {
+            BlockReplaceChild(parent, block, childI);
+        }
+        else
+        {
+            BlockInsertChild(parent, block, childI);
+        }
+
         BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 
         cursor->block = block;
@@ -113,7 +171,10 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
     bool isCanceling = InputIsButtonPressed(input, GLFW_KEY_ESCAPE);
     bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
 
-    const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
+    int32_t childI;
+    CursorGetChildIndexInDirection(cursor, &childI);
+
+    const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
     Block *parent = cursor->block->parent;
 
     if (isConfirming && parent && defaultChildKind->isPin)
@@ -130,10 +191,17 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
                 continue;
             }
 
-            int32_t childI = cursor->block->childI;
             Block *block = BlockNew(kindId, parent, childI);
 
-            BlockReplaceChild(parent, block, childI);
+            if (cursor->insertDirection == InsertDirectionCenter)
+            {
+                BlockReplaceChild(parent, block, childI);
+            }
+            else
+            {
+                BlockInsertChild(parent, block, childI);
+            }
+
             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 
             cursor->block = block;
@@ -145,10 +213,17 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
 
         if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
         {
-            int32_t childI = cursor->block->childI;
             Block *block = BlockNewIdentifier(cursor->insertText.data, cursor->insertText.count, font, parent, childI);
 
-            BlockReplaceChild(parent, block, childI);
+            if (cursor->insertDirection == InsertDirectionCenter)
+            {
+                BlockReplaceChild(parent, block, childI);
+            }
+            else
+            {
+                BlockInsertChild(parent, block, childI);
+            }
+
             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 
             cursor->block = block;
@@ -177,14 +252,14 @@ void CursorUpdate(Cursor *cursor, Input *input, Block *rootBlock, Font *font)
 {
     switch (cursor->state)
     {
-        case CursorStateMove: {
-            CursorUpdateMove(cursor, input, rootBlock);
-            break;
-        }
-        case CursorStateInsert: {
-            CursorUpdateInsert(cursor, input, rootBlock, font);
-            break;
-        }
+    case CursorStateMove: {
+        CursorUpdateMove(cursor, input, rootBlock);
+        break;
+    }
+    case CursorStateInsert: {
+        CursorUpdateInsert(cursor, input, rootBlock, font);
+        break;
+    }
     }
 }
 
@@ -247,14 +322,7 @@ void CursorPrevious(Cursor *cursor)
 static void CursorMoveHorizontalOrVertical(
     Cursor *cursor, void (*horizontalMovement)(Cursor *cursor), void (*verticalMovement)(Cursor *cursor))
 {
-    BlockKind *parentKind = &BlockKinds[cursor->block->kindId];
-
-    if (cursor->block->parent)
-    {
-        parentKind = &BlockKinds[cursor->block->parent->kindId];
-    }
-
-    if (parentKind->isVertical)
+    if (CursorIsVertical(cursor))
     {
         verticalMovement(cursor);
         return;
