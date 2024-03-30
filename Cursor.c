@@ -16,7 +16,7 @@ void CursorDelete(Cursor *cursor)
     ListDelete_char(&cursor->insertText);
 }
 
-static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection)
+static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, Block *rootBlock)
 {
     cursor->state = CursorStateInsert;
     cursor->insertDirection = insertDirection;
@@ -28,7 +28,11 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection)
     {
         int32_t childI = cursor->block->childI;
 
-        BlockReplaceChild(parent, BlockNew(defaultChildKind->blockKindId, parent, childI), childI);
+        Block *block = BlockNew(defaultChildKind->blockKindId, parent, childI);
+        BlockReplaceChild(parent, block, childI);
+        BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
+
+        cursor->block = block;
         cursor->state = CursorStateMove;
     }
 }
@@ -62,27 +66,27 @@ static void CursorUpdateMove(Cursor *cursor, Input *input, Block *rootBlock)
 
     if (InputIsButtonPressed(input, GLFW_KEY_SPACE))
     {
-        CursorStartInsert(cursor, InsertDirectionCenter);
+        CursorStartInsert(cursor, InsertDirectionCenter, rootBlock);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_I))
     {
-        CursorStartInsert(cursor, InsertDirectionUp);
+        CursorStartInsert(cursor, InsertDirectionUp, rootBlock);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_K))
     {
-        CursorStartInsert(cursor, InsertDirectionDown);
+        CursorStartInsert(cursor, InsertDirectionDown, rootBlock);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_J))
     {
-        CursorStartInsert(cursor, InsertDirectionLeft);
+        CursorStartInsert(cursor, InsertDirectionLeft, rootBlock);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_L))
     {
-        CursorStartInsert(cursor, InsertDirectionRight);
+        CursorStartInsert(cursor, InsertDirectionRight, rootBlock);
     }
 }
 
@@ -130,9 +134,9 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
             Block *block = BlockNew(kindId, parent, childI);
 
             BlockReplaceChild(parent, block, childI);
-            cursor->block = block;
             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 
+            cursor->block = block;
             cursor->state = CursorStateMove;
             ListReset_char(&cursor->insertText);
 
@@ -145,9 +149,9 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
             Block *block = BlockNewIdentifier(cursor->insertText.data, cursor->insertText.count, font, parent, childI);
 
             BlockReplaceChild(parent, block, childI);
-            cursor->block = block;
             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 
+            cursor->block = block;
             cursor->state = CursorStateMove;
             ListReset_char(&cursor->insertText);
 
@@ -295,7 +299,7 @@ void CursorDeleteHere(Cursor *cursor, Block *rootBlock)
         // This isn't a default child, so it doesn't need to be preserved. Fully delete it.
         int32_t deleteI = cursor->block->childI;
 
-        if (cursor->block->childI < parentParentData->children.count)
+        if (cursor->block->childI < parentParentData->children.count - 1)
         {
             cursor->block = parentParentData->children.data[cursor->block->childI + 1];
         }

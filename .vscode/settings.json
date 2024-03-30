@@ -9,6 +9,13 @@
         "stdlib.h": "c",
         "*.h": "c",
         "xstring": "c",
-        "list": "c"
+        "list": "c",
+        "xutility": "c",
+        "compare": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c",
+        "xmemory": "c",
+        "xtr1common": "c"
     }
 }

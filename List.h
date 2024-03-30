@@ -14,9 +14,9 @@
         int32_t count;                                                                                                 \
     } List_##type;                                                                                                     \
                                                                                                                        \
-    inline struct List_##type ListNew_##type(int32_t capacity)                                                         \
+    inline List_##type ListNew_##type(int32_t capacity)                                                                \
     {                                                                                                                  \
-        struct List_##type list = (struct List_##type){                                                                \
+        List_##type list = (List_##type){                                                                              \
             .data = NULL,                                                                                              \
             .capacity = capacity,                                                                                      \
             .count = 0,                                                                                                \
@@ -31,12 +31,12 @@
         return list;                                                                                                   \
     }                                                                                                                  \
                                                                                                                        \
-    inline void ListReset_##type(struct List_##type *list)                                                             \
+    inline void ListReset_##type(List_##type *list)                                                                    \
     {                                                                                                                  \
         list->count = 0;                                                                                               \
     }                                                                                                                  \
                                                                                                                        \
-    inline void ListPush_##type(struct List_##type *list, type value)                                                  \
+    inline void ListPush_##type(List_##type *list, type value)                                                         \
     {                                                                                                                  \
         if (list->count >= list->capacity)                                                                             \
         {                                                                                                              \
@@ -49,7 +49,19 @@
         ++list->count;                                                                                                 \
     }                                                                                                                  \
                                                                                                                        \
-    inline type ListPop_##type(struct List_##type *list)                                                               \
+    inline void ListInsert_##type(List_##type *list, type value, int32_t i)                                            \
+    {                                                                                                                  \
+        ListPush_##type(list, (type){0});                                                                              \
+                                                                                                                       \
+        for (int32_t shiftI = list->count - 1; shiftI > i; shiftI--)                                                   \
+        {                                                                                                              \
+            list->data[shiftI] = list->data[shiftI - 1];                                                               \
+        }                                                                                                              \
+                                                                                                                       \
+        list->data[i] = value;                                                                                         \
+    }                                                                                                                  \
+                                                                                                                       \
+    inline type ListPop_##type(List_##type *list)                                                                      \
     {                                                                                                                  \
         assert(list->count > 0);                                                                                       \
                                                                                                                        \
@@ -57,7 +69,7 @@
         return list->data[list->count];                                                                                \
     }                                                                                                                  \
                                                                                                                        \
-    inline void ListRemove_##type(struct List_##type *list, int32_t i)                                                 \
+    inline void ListRemove_##type(List_##type *list, int32_t i)                                                        \
     {                                                                                                                  \
         assert(list->count > i);                                                                                       \
                                                                                                                        \
@@ -70,7 +82,7 @@
     }                                                                                                                  \
                                                                                                                        \
     /* Replace the ith element with the last element. Fast, but changes the list's order. */                           \
-    inline void ListRemoveUnordered_##type(struct List_##type *list, int32_t i)                                        \
+    inline void ListRemoveUnordered_##type(List_##type *list, int32_t i)                                               \
     {                                                                                                                  \
         assert(list->count > i);                                                                                       \
                                                                                                                        \
@@ -78,7 +90,7 @@
         list->data[i] = list->data[list->count];                                                                       \
     }                                                                                                                  \
                                                                                                                        \
-    inline void ListDelete_##type(struct List_##type *list)                                                            \
+    inline void ListDelete_##type(List_##type *list)                                                                   \
     {                                                                                                                  \
         free(list->data);                                                                                              \
     }
