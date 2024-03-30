@@ -60,6 +60,28 @@ static bool CursorGetChildIndexInDirection(Cursor *cursor, int32_t *childI)
     return true;
 }
 
+static void CursorAddChild(Cursor *cursor, Block *parent, Block *child, int32_t childI, Block *rootBlock)
+{
+    if (cursor->insertDirection == InsertDirectionCenter)
+    {
+        BlockReplaceChild(parent, child, childI);
+    }
+    else
+    {
+        BlockInsertChild(parent, child, childI);
+    }
+
+    BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
+
+    cursor->block = child;
+}
+
+static void CursorEndInsert(Cursor *cursor)
+{
+    cursor->state = CursorStateMove;
+    ListReset_char(&cursor->insertText);
+}
+
 static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, Block *rootBlock)
 {
     cursor->state = CursorStateInsert;
@@ -68,7 +90,8 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, B
     int32_t childI;
     if (!CursorGetChildIndexInDirection(cursor, &childI))
     {
-        cursor->state = CursorStateMove;
+        CursorEndInsert(cursor);
+
         return;
     }
 
@@ -78,20 +101,10 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, B
     if (parent && !defaultChildKind->isPin)
     {
         Block *block = BlockNew(defaultChildKind->blockKindId, parent, childI);
+        CursorAddChild(cursor, parent, block, childI, rootBlock);
+        CursorEndInsert(cursor);
 
-        if (cursor->insertDirection == InsertDirectionCenter)
-        {
-            BlockReplaceChild(parent, block, childI);
-        }
-        else
-        {
-            BlockInsertChild(parent, block, childI);
-        }
-
-        BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
-
-        cursor->block = block;
-        cursor->state = CursorStateMove;
+        return;
     }
 }
 
@@ -192,21 +205,8 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
             }
 
             Block *block = BlockNew(kindId, parent, childI);
-
-            if (cursor->insertDirection == InsertDirectionCenter)
-            {
-                BlockReplaceChild(parent, block, childI);
-            }
-            else
-            {
-                BlockInsertChild(parent, block, childI);
-            }
-
-            BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
-
-            cursor->block = block;
-            cursor->state = CursorStateMove;
-            ListReset_char(&cursor->insertText);
+            CursorAddChild(cursor, parent, block, childI, rootBlock);
+            CursorEndInsert(cursor);
 
             return;
         }
@@ -214,21 +214,8 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
         if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
         {
             Block *block = BlockNewIdentifier(cursor->insertText.data, cursor->insertText.count, font, parent, childI);
-
-            if (cursor->insertDirection == InsertDirectionCenter)
-            {
-                BlockReplaceChild(parent, block, childI);
-            }
-            else
-            {
-                BlockInsertChild(parent, block, childI);
-            }
-
-            BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
-
-            cursor->block = block;
-            cursor->state = CursorStateMove;
-            ListReset_char(&cursor->insertText);
+            CursorAddChild(cursor, parent, block, childI, rootBlock);
+            CursorEndInsert(cursor);
 
             return;
         }
