@@ -20,7 +20,11 @@ Cursor CursorNew(Block *block)
 void CursorDelete(Cursor *cursor)
 {
     ListDelete_char(&cursor->insertText);
-    BlockDelete(cursor->clipboardBlock);
+
+    if (cursor->clipboardBlock)
+    {
+        BlockDelete(cursor->clipboardBlock);
+    }
 }
 
 static bool CursorIsVertical(Cursor *cursor)
