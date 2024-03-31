@@ -39,7 +39,47 @@ static bool CursorIsVertical(Cursor *cursor)
     return parentKind->isVertical;
 }
 
-static bool CursorGetChildIndexInDirection(Cursor *cursor, int32_t *childI)
+static bool CursorGetChildIndexInDirection(Cursor *cursor, InsertDirection direction, int32_t *childI)
+{
+    *childI = cursor->block->childI;
+
+    if (CursorIsVertical(cursor))
+    {
+        if (direction == InsertDirectionLeft && direction == InsertDirectionRight)
+        {
+            return false;
+        }
+
+        if (direction == InsertDirectionDown)
+        {
+            *childI += 1;
+        }
+        else if (direction == InsertDirectionUp)
+        {
+            *childI -= 1;
+        }
+    }
+    else
+    {
+        if (direction == InsertDirectionUp && direction == InsertDirectionDown)
+        {
+            return false;
+        }
+
+        if (direction == InsertDirectionRight)
+        {
+            *childI += 1;
+        }
+        else if (direction == InsertDirectionLeft)
+        {
+            *childI -= 1;
+        }
+    }
+
+    return true;
+}
+
+static bool CursorGetChildInsertIndexInDirection(Cursor *cursor, int32_t *childI)
 {
     *childI = cursor->block->childI;
 
@@ -99,7 +139,7 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, B
     cursor->insertDirection = insertDirection;
 
     int32_t childI;
-    if (!CursorGetChildIndexInDirection(cursor, &childI))
+    if (!CursorGetChildInsertIndexInDirection(cursor, &childI))
     {
         CursorEndInsert(cursor);
 
@@ -117,6 +157,39 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, B
 
         return;
     }
+}
+
+static void CursorShift(Cursor *cursor, InsertDirection shiftDirection, Block *rootBlock)
+{
+    if (!cursor->block->parent)
+    {
+        return;
+    }
+
+    BlockParentData *parentParentData = &cursor->block->parent->data.parent;
+
+    int32_t childI;
+    if (!CursorGetChildIndexInDirection(cursor, shiftDirection, &childI))
+    {
+        return;
+    }
+
+    childI = MathInt32Clamp(childI, 0, parentParentData->children.count - 1);
+
+    DefaultChildKind *otherDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
+
+    if (!BlockCanSwapWith(cursor->block, otherDefaultChildKind))
+    {
+        return;
+    }
+
+    parentParentData->children.data[cursor->block->childI] = parentParentData->children.data[childI];
+    parentParentData->children.data[childI]->childI = cursor->block->childI;
+
+    parentParentData->children.data[childI] = cursor->block;
+    cursor->block->childI = childI;
+
+    BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 }
 
 static void CursorCopy(Cursor *cursor)
@@ -160,24 +233,51 @@ static void CursorPaste(Cursor *cursor, Block *rootBlock)
 
 static void CursorUpdateMove(Cursor *cursor, Input *input, Block *rootBlock)
 {
-    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_E))
-    {
-        CursorUp(cursor);
-    }
+    bool isShiftHeld = InputIsButtonHeld(input, GLFW_KEY_LEFT_SHIFT) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_SHIFT);
 
-    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_D))
+    if (isShiftHeld)
     {
-        CursorDown(cursor);
-    }
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_E))
+        {
+            CursorShift(cursor, InsertDirectionUp, rootBlock);
+        }
 
-    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_S))
-    {
-        CursorLeft(cursor);
-    }
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_D))
+        {
+            CursorShift(cursor, InsertDirectionDown, rootBlock);
+        }
 
-    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_F))
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_S))
+        {
+            CursorShift(cursor, InsertDirectionLeft, rootBlock);
+        }
+
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_F))
+        {
+            CursorShift(cursor, InsertDirectionRight, rootBlock);
+        }
+    }
+    else
     {
-        CursorRight(cursor);
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_E))
+        {
+            CursorUp(cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_D))
+        {
+            CursorDown(cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_S))
+        {
+            CursorLeft(cursor);
+        }
+
+        if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_F))
+        {
+            CursorRight(cursor);
+        }
     }
 
     if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_BACKSPACE))
@@ -250,7 +350,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
     bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
 
     int32_t childI;
-    CursorGetChildIndexInDirection(cursor, &childI);
+    CursorGetChildInsertIndexInDirection(cursor, &childI);
 
     const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
     Block *parent = cursor->block->parent;

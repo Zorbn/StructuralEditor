@@ -28,7 +28,6 @@
  * TODO, Missing things from the other version:
  * Inserting nothing inserts a pin,
  * Zooming,
- * Shifting blocks,
  * Saving,
  * Text insert display,
  * Converting underscores to and from spaces,
@@ -194,6 +193,8 @@ int main(int argumentCount, char **arguments)
         double frameTime = glfwGetTime();
         float deltaTime = (float)(frameTime - lastFrameTime);
         lastFrameTime = frameTime;
+
+        // printf("%f\n", 1.0f / deltaTime);
 
         CursorUpdate(&cursor, &input, rootBlock, font);
         CameraUpdate(&camera, &cursor, rootBlock, deltaTime);

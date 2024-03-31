@@ -477,6 +477,8 @@ uint64_t BlockCountAll(Block *block)
 // and calls BlockUpdateTree on the root node if it is dirty, the unmarks the dirty flag. This is to prevent multiple
 // redundant calls to BlockUpdateTree per frame, when it really only needs to be called once before drawing if the tree
 // was modified.
+// TODO: Per frame store a list of blocks that are dirty, (when marking a block as dirty also mark all of it's parents as dirty).
+// When updating only recompute dirty blocks.
 void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 {
     block->x = x;
