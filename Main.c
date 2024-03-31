@@ -26,7 +26,6 @@
 
 /*
  * TODO, Missing things from the other version:
- * Inserting nothing inserts a pin,
  * Zooming,
  * Saving,
  * Text insert display,

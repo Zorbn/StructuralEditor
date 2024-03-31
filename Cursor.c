@@ -45,7 +45,7 @@ static bool CursorGetChildIndexInDirection(Cursor *cursor, InsertDirection direc
 
     if (CursorIsVertical(cursor))
     {
-        if (direction == InsertDirectionLeft && direction == InsertDirectionRight)
+        if (direction == InsertDirectionLeft || direction == InsertDirectionRight)
         {
             return false;
         }
@@ -61,7 +61,7 @@ static bool CursorGetChildIndexInDirection(Cursor *cursor, InsertDirection direc
     }
     else
     {
-        if (direction == InsertDirectionUp && direction == InsertDirectionDown)
+        if (direction == InsertDirectionUp || direction == InsertDirectionDown)
         {
             return false;
         }
@@ -85,7 +85,7 @@ static bool CursorGetChildInsertIndexInDirection(Cursor *cursor, int32_t *childI
 
     if (CursorIsVertical(cursor))
     {
-        if (cursor->insertDirection == InsertDirectionLeft && cursor->insertDirection == InsertDirectionRight)
+        if (cursor->insertDirection == InsertDirectionLeft || cursor->insertDirection == InsertDirectionRight)
         {
             return false;
         }
@@ -97,7 +97,7 @@ static bool CursorGetChildInsertIndexInDirection(Cursor *cursor, int32_t *childI
     }
     else
     {
-        if (cursor->insertDirection == InsertDirectionUp && cursor->insertDirection == InsertDirectionDown)
+        if (cursor->insertDirection == InsertDirectionUp || cursor->insertDirection == InsertDirectionDown)
         {
             return false;
         }
@@ -135,16 +135,27 @@ static void CursorEndInsert(Cursor *cursor)
 
 static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, Block *rootBlock)
 {
-    cursor->state = CursorStateInsert;
+    if (!cursor->block->parent)
+    {
+        return;
+    }
+
     cursor->insertDirection = insertDirection;
 
     int32_t childI;
     if (!CursorGetChildInsertIndexInDirection(cursor, &childI))
     {
-        CursorEndInsert(cursor);
-
         return;
     }
+
+    const BlockKind *kind = &BlockKinds[cursor->block->parent->kindId];
+
+    if (insertDirection != InsertDirectionCenter && (!kind->isGrowable || childI < kind->defaultChildrenCount - 1))
+    {
+        return;
+    }
+
+    cursor->state = CursorStateInsert;
 
     const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
     Block *parent = cursor->block->parent;
@@ -358,6 +369,15 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Block *rootBlock, F
     if (isConfirming && parent && defaultChildKind->isPin)
     {
         const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[defaultChildKind->pinKind];
+
+        if (cursor->insertText.count == 0 && defaultChildKind->isPin)
+        {
+            Block *block = BlockNew(BlockKindIdPin, parent, childI);
+            CursorAddChild(cursor, parent, block, childI, rootBlock);
+            CursorEndInsert(cursor);
+
+            return;
+        }
 
         for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
         {
