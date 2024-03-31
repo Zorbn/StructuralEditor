@@ -117,8 +117,14 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, B
 
 static void CursorCopy(Cursor *cursor)
 {
+    if (!cursor->block->parent)
+    {
+        return;
+    }
+
     free(cursor->clipboardBlock);
     cursor->clipboardBlock = BlockCopy(cursor->block, NULL, 0);
+    cursor->clipboardDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
 }
 
 static void CursorCut(Cursor *cursor, Block *rootBlock)
@@ -129,7 +135,12 @@ static void CursorCut(Cursor *cursor, Block *rootBlock)
 
 static void CursorPaste(Cursor *cursor, Block *rootBlock)
 {
-    if (!cursor->block->parent)
+    if (!cursor->block->parent || !cursor->clipboardBlock)
+    {
+        return;
+    }
+
+    if (!BlockCanSwapWith(cursor->block, cursor->clipboardDefaultChildKind))
     {
         return;
     }

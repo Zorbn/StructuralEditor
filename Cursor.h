@@ -22,6 +22,7 @@ typedef struct Cursor
 {
     Block *block;
     Block *clipboardBlock;
+    DefaultChildKind *clipboardDefaultChildKind;
 
     List_char insertText;
     InsertDirection insertDirection;

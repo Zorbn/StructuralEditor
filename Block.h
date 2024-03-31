@@ -118,6 +118,7 @@ int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
 DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI);
+bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind);
 void BlockReplaceChild(Block *block, Block *child, int32_t childI);
 void BlockInsertChild(Block *block, Block *child, int32_t childI);
 uint64_t BlockCountAll(Block *block);

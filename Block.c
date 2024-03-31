@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 
-DefaultChildKind NewChild(BlockKindId childBlockKindId)
+static DefaultChildKind NewChild(BlockKindId childBlockKindId)
 {
     return (DefaultChildKind){
         .blockKindId = childBlockKindId,
@@ -18,12 +18,22 @@ DefaultChildKind NewChild(BlockKindId childBlockKindId)
     };
 }
 
-DefaultChildKind NewChildPin(PinKind childPinKind)
+static DefaultChildKind NewChildPin(PinKind childPinKind)
 {
     return (DefaultChildKind){
         .pinKind = childPinKind,
         .isPin = true,
     };
+}
+
+static PinKind DefaultChildKindGetPinKind(DefaultChildKind *defaultChildKind)
+{
+    if (defaultChildKind->isPin)
+    {
+        return defaultChildKind->pinKind;
+    }
+
+    return BlockKinds[defaultChildKind->blockKindId].pinKind;
 }
 
 BlockKind BlockKindNew(BlockKind blockKind)
@@ -395,6 +405,21 @@ DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI)
     childI = MathInt32Min(childI, kind->defaultChildrenCount - 1);
 
     return &kind->defaultChildren[childI];
+}
+
+bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind)
+{
+    if (!block->parent)
+    {
+        return false;
+    }
+
+    DefaultChildKind *defaultChildKind = BlockGetDefaultChild(block->parent, block->childI);
+
+    PinKind pinKind = DefaultChildKindGetPinKind(defaultChildKind);
+    PinKind otherPinKind = DefaultChildKindGetPinKind(otherDefaultChildKind);
+
+    return pinKind == otherPinKind;
 }
 
 // Frees the old child if it exists, expands this block's children array as necessary.
