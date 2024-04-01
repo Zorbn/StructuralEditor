@@ -27,9 +27,9 @@
 /*
  * TODO, Missing things from the other version:
  * Zooming,
+ *  - On zoom, for fonts: UpdateTreeFont, UpdateTree and BlockKindsUpdateTextSize with new font size.
  * Saving,
  * Text insert display,
- * Converting underscores to and from spaces,
  *
  * TODO, New features:
  * Auto-complete for insert mode,
@@ -236,6 +236,7 @@ int main(int argumentCount, char **arguments)
     CursorDelete(&cursor);
     BlockDelete(rootBlock);
     FontDelete(font);
+    ParserDelete(&parser);
     free(data);
 
     BlockKindsDeinit();

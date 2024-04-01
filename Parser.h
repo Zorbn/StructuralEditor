@@ -2,14 +2,17 @@
 
 #include "Lexer.h"
 #include "Block.h"
+#include "List.h"
 
 typedef struct Parser
 {
     Lexer lexer;
     Font *font;
+    List_char textBuffer;
 } Parser;
 
 Parser ParserNew(Lexer lexer, Font *font);
+void ParserDelete(Parser *parser);
 
 void ParserMatch(Parser *parser, char *string);
 bool ParserHas(Parser *parser, char *string);

@@ -7,9 +7,6 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-ListDefine(int32_t);
-ListDefine(char);
-
 typedef struct Input
 {
     List_int32_t heldButtons;

@@ -10,7 +10,13 @@ Parser ParserNew(Lexer lexer, Font *font)
     return (Parser){
         .lexer = lexer,
         .font = font,
+        .textBuffer = ListNew_char(16),
     };
+}
+
+void ParserDelete(Parser *parser)
+{
+    ListDelete_char(&parser->textBuffer);
 }
 
 void ParserMatch(Parser *parser, char *string)
@@ -309,7 +315,23 @@ Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI)
 {
     Token text = LexerNext(&parser->lexer);
     int32_t textCount = text.end - text.start;
-    Block *block = BlockNewIdentifier(parser->lexer.data + text.start, textCount, parser->font, parent, childI);
+
+    ListReset_char(&parser->textBuffer);
+    ListReserve_char(&parser->textBuffer, textCount);
+
+    for (int32_t i = 0; i < textCount; i++)
+    {
+        char textChar = parser->lexer.data[text.start + i];
+
+        if (textChar == '_')
+        {
+            textChar = ' ';
+        }
+
+        ListPush_char(&parser->textBuffer, textChar);
+    }
+
+     Block *block = BlockNewIdentifier(parser->textBuffer.data, parser->textBuffer.count, parser->font, parent, childI);
 
     return block;
 }

@@ -36,6 +36,17 @@
         list->count = 0;                                                                                               \
     }                                                                                                                  \
                                                                                                                        \
+    inline void ListReserve_##type(List_##type *list, int32_t capacity)                                                \
+    {                                                                                                                  \
+        while (list->capacity < capacity)                                                                              \
+        {                                                                                                              \
+            list->capacity *= 2;                                                                                       \
+        }                                                                                                              \
+                                                                                                                       \
+        list->data = realloc(list->data, list->capacity * sizeof(type));                                               \
+        assert(list->data);                                                                                            \
+    }                                                                                                                  \
+                                                                                                                       \
     inline void ListPush_##type(List_##type *list, type value)                                                         \
     {                                                                                                                  \
         if (list->count >= list->capacity)                                                                             \
@@ -94,3 +105,6 @@
     {                                                                                                                  \
         free(list->data);                                                                                              \
     }
+
+ListDefine(int32_t);
+ListDefine(char);

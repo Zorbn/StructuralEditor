@@ -114,7 +114,7 @@ void BlockKindsInit(void)
     });
     BlockKinds[BlockKindIdFunctionHeader] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
-        .text = "fn",
+        .text = "function",
         .isGrowable = true,
         .defaultChildren =
             (DefaultChildKind[]){
@@ -136,7 +136,7 @@ void BlockKindsInit(void)
     });
     BlockKinds[BlockKindIdLambdaFunctionHeader] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
-        .text = "fn",
+        .text = "function",
         .isGrowable = true,
         .defaultChildren =
             (DefaultChildKind[]){
