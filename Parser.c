@@ -319,11 +319,14 @@ Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI)
     ListReset_char(&parser->textBuffer);
     ListReserve_char(&parser->textBuffer, textCount);
 
+    char firstChar = parser->lexer.data[text.start];
+    bool doConvert = firstChar != '"' && firstChar != '\'';
+
     for (int32_t i = 0; i < textCount; i++)
     {
         char textChar = parser->lexer.data[text.start + i];
 
-        if (textChar == '_')
+        if (doConvert && textChar == '_')
         {
             textChar = ' ';
         }
