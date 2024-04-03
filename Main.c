@@ -194,7 +194,7 @@ int main(int argumentCount, char **arguments)
         float deltaTime = (float)(frameTime - lastFrameTime);
         lastFrameTime = frameTime;
 
-        // printf("%f\n", 1.0f / deltaTime);
+        printf("%f\n", 1.0f / deltaTime);
 
 //         bool didCameraZoom = false;
 //

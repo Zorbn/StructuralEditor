@@ -141,10 +141,7 @@ static void FontStashRenderDraw(void *user, const float *vertices, const float *
         float u3 = uvs[(q + i) * 2];
         float v3 = uvs[(q + i) * 2 + 1];
 
-        sgp_push_transform();
-        sgp_translate(x1, y1);
-        sgp_draw_textured_rect(0, (sgp_rect){0, 0, (x3 - x1), (y3 - y1)}, (sgp_rect){u1 * width, v1 * height, (u3 - u1) * width, (v3 - v1) * height});
-        sgp_pop_transform();
+        sgp_draw_textured_rect(0, (sgp_rect){x1, y1, (x3 - x1), (y3 - y1)}, (sgp_rect){u1 * width, v1 * height, (u3 - u1) * width, (v3 - v1) * height});
     }
 
     sgp_reset_image(0);
