@@ -610,41 +610,30 @@ static Color BlockGetDepthColor(int32_t depth, Theme *theme)
 
 static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, int32_t minY)
 {
-    for (int32_t i = 0; i < childrenCount; i++)
+    int32_t minI = 0;
+    int32_t maxI = childrenCount - 1;
+
+    if (maxI < 1)
     {
+        return 0;
+    }
+
+    while (minI != maxI)
+    {
+        int32_t i = (minI + maxI) / 2;
         Block *child = block->data.parent.children.data[i];
 
-        if (child->y + child->height > minY)
+        if (child->y + child->height < minY)
         {
-            return i;
+            minI += 1;
+        }
+        else
+        {
+            maxI = i;
         }
     }
 
-    return childrenCount - 1;
-    //     int32_t minI = 0;
-    //     int32_t maxI = childrenCount - 1;
-    //
-    //     if (maxI < 1)
-    //     {
-    //         return 0;
-    //     }
-    //
-    //     while (minI != maxI)
-    //     {
-    //         int32_t i = (minI + maxI) / 2;
-    //         Block *child = block->data.parent.children.data[i];
-    //
-    //         if (child->y + child->height < minY)
-    //         {
-    //             minI += 1;
-    //         }
-    //         else
-    //         {
-    //             maxI = i;
-    //         }
-    //     }
-    //
-    //     return minI;
+    return minI;
 }
 
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme)
