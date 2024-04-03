@@ -367,6 +367,32 @@ void BlockDelete(Block *block)
     free(block);
 }
 
+static void BlockMarkChildrenNeedsUpdate(Block *block)
+{
+    block->y = INT32_MAX;
+
+    int32_t childrenCount = BlockGetChildrenCount(block);
+
+    for (int32_t i = 0; i < childrenCount; i++)
+    {
+        Block *child = block->data.parent.children.data[i];
+        BlockMarkChildrenNeedsUpdate(child);
+    }
+}
+
+void BlockMarkNeedsUpdate(Block *block)
+{
+    BlockMarkChildrenNeedsUpdate(block);
+
+    Block *parent = block->parent;
+
+    while (parent && parent->y != INT32_MAX)
+    {
+        parent->y = INT32_MAX;
+        parent = parent->parent;
+    }
+}
+
 int32_t BlockGetChildrenCount(Block *block)
 {
     if (block->kindId == BlockKindIdIdentifier)
@@ -492,8 +518,13 @@ void BlockUpdateTextSize(Block *block, Font *font)
     }
 }
 
-void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t maxY)
+void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 {
+    if (block->y != INT32_MAX)
+    {
+        return;
+    }
+
     block->x = x;
     block->y = y;
 
@@ -529,21 +560,13 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t max
         {
             Block *child = block->data.parent.children.data[i];
 
-            if (child->y + child->height >= tree->updatedY)
-            {
-                BlockUpdateTree(child, x, y, tree, maxY);
-            }
+            BlockUpdateTree(child, x, y);
 
             x += child->width + BlockPadding;
             y += child->height + BlockPadding;
 
             maxWidth = MathInt32Max(maxWidth, x - block->x);
             x = startX;
-
-            if (child->y > maxY)
-            {
-                break;
-            }
         }
     }
     else
@@ -554,10 +577,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t max
         {
             Block *child = block->data.parent.children.data[i];
 
-            if (child->y + child->height >= tree->updatedY)
-            {
-                BlockUpdateTree(child, x, y, tree, maxY);
-            }
+            BlockUpdateTree(child, x, y);
 
             x += child->width + BlockPadding;
 
@@ -567,11 +587,6 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t max
             }
 
             maxHeight = MathInt32Max(maxHeight, child->height + BlockPadding);
-
-            if (child->y > maxY)
-            {
-                break;
-            }
         }
 
         maxWidth = MathInt32Max(maxWidth, x - block->x);

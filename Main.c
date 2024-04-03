@@ -177,7 +177,6 @@ int main(int argumentCount, char **arguments)
     BlockKindsInit();
     BlockKindsUpdateTextSize(font);
 
-    Tree tree = TreeNew();
     Parser parser = ParserNew(LexerNew(data, dataCount), font);
     Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
     Cursor cursor = CursorNew(rootBlock);
@@ -222,10 +221,8 @@ int main(int argumentCount, char **arguments)
 //             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
 //         }
 
-        CursorUpdate(&cursor, &input, &tree, font);
-        int32_t updateMaxY = (int32_t)(MathFloatMax(camera.y + camera.height, cursor.y + cursor.height) + 400);
-        BlockUpdateTree(rootBlock, 0, 0, &tree, updateMaxY);
-        tree.updatedY = updateMaxY;
+        CursorUpdate(&cursor, &input, font);
+        BlockUpdateTree(rootBlock, 0, 0);
         CameraUpdate(&camera, &cursor, rootBlock, deltaTime);
         InputUpdate(&input);
 

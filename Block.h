@@ -3,7 +3,6 @@
 #include "Font.h"
 #include "Theme.h"
 #include "List.h"
-#include "Tree.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -115,6 +114,7 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI);
 Block *BlockNewIdentifier(char *text, int32_t textLength, Font *font, Block *parent, int32_t childI);
 Block *BlockCopy(Block *other, Block *parent, int32_t childI);
 void BlockDelete(Block *block);
+void BlockMarkNeedsUpdate(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
@@ -124,5 +124,5 @@ void BlockReplaceChild(Block *block, Block *child, int32_t childI);
 void BlockInsertChild(Block *block, Block *child, int32_t childI);
 uint64_t BlockCountAll(Block *block);
 void BlockUpdateTextSize(Block *block, Font *font);
-void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t maxY);
+void BlockUpdateTree(Block *block, int32_t x, int32_t y);
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme);

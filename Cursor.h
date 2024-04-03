@@ -2,7 +2,6 @@
 
 #include "Block.h"
 #include "Input.h"
-#include "Tree.h"
 
 typedef enum InsertDirection
 {
@@ -40,7 +39,7 @@ typedef struct Cursor
 
 Cursor CursorNew(Block *block);
 void CursorDelete(Cursor *cursor);
-void CursorUpdate(Cursor *cursor, Input *input, Tree *tree, Font *font);
+void CursorUpdate(Cursor *cursor, Input *input, Font *font);
 void CursorDraw(Cursor *cursor, Theme *theme, float deltaTime);
 void CursorAscend(Cursor *cursor);
 void CursorDescend(Cursor *cursor);
@@ -50,4 +49,4 @@ void CursorUp(Cursor *cursor);
 void CursorDown(Cursor *cursor);
 void CursorLeft(Cursor *cursor);
 void CursorRight(Cursor *cursor);
-void CursorDeleteHere(Cursor *cursor, Tree *tree);
+void CursorDeleteHere(Cursor *cursor);

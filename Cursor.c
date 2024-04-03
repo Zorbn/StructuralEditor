@@ -111,9 +111,9 @@ static bool CursorGetChildInsertIndexInDirection(Cursor *cursor, int32_t *childI
     return true;
 }
 
-static void CursorAddChild(Cursor *cursor, Block *parent, Block *child, int32_t childI, Tree *tree)
+static void CursorAddChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
 {
-    TreeRequestUpdate(tree, cursor->block->y);
+    BlockMarkNeedsUpdate(cursor->block);
 
     if (cursor->insertDirection == InsertDirectionCenter)
     {
@@ -133,7 +133,7 @@ static void CursorEndInsert(Cursor *cursor)
     ListReset_char(&cursor->insertText);
 }
 
-static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, Tree *tree)
+static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection)
 {
     if (!cursor->block->parent)
     {
@@ -163,14 +163,14 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection, T
     if (parent && !defaultChildKind->isPin)
     {
         Block *block = BlockNew(defaultChildKind->blockKindId, parent, childI);
-        CursorAddChild(cursor, parent, block, childI, tree);
+        CursorAddChild(cursor, parent, block, childI);
         CursorEndInsert(cursor);
 
         return;
     }
 }
 
-static void CursorShift(Cursor *cursor, InsertDirection shiftDirection, Tree *tree)
+static void CursorShift(Cursor *cursor, InsertDirection shiftDirection)
 {
     if (!cursor->block->parent)
     {
@@ -194,8 +194,8 @@ static void CursorShift(Cursor *cursor, InsertDirection shiftDirection, Tree *tr
         return;
     }
 
-    TreeRequestUpdate(tree, cursor->block->y);
-    TreeRequestUpdate(tree, parentParentData->children.data[childI]->y);
+    BlockMarkNeedsUpdate(cursor->block);
+    BlockMarkNeedsUpdate(parentParentData->children.data[childI]);
 
     parentParentData->children.data[cursor->block->childI] = parentParentData->children.data[childI];
     parentParentData->children.data[childI]->childI = cursor->block->childI;
@@ -216,13 +216,13 @@ static void CursorCopy(Cursor *cursor)
     cursor->clipboardDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
 }
 
-static void CursorCut(Cursor *cursor, Tree *tree)
+static void CursorCut(Cursor *cursor)
 {
     CursorCopy(cursor);
-    CursorDeleteHere(cursor, tree);
+    CursorDeleteHere(cursor);
 }
 
-static void CursorPaste(Cursor *cursor, Tree *tree)
+static void CursorPaste(Cursor *cursor)
 {
     if (!cursor->block->parent || !cursor->clipboardBlock)
     {
@@ -237,7 +237,7 @@ static void CursorPaste(Cursor *cursor, Tree *tree)
     BlockParentData *parentParentData = &cursor->block->parent->data.parent;
     Block *pastedBlock = BlockCopy(cursor->clipboardBlock, cursor->block->parent, cursor->block->childI);
 
-    TreeRequestUpdate(tree, cursor->block->y);
+    BlockMarkNeedsUpdate(cursor->block);
 
     BlockReplaceChild(cursor->block->parent, pastedBlock, cursor->block->childI);
 
@@ -245,7 +245,7 @@ static void CursorPaste(Cursor *cursor, Tree *tree)
 
 }
 
-static void CursorUpdateMove(Cursor *cursor, Input *input, Tree *tree)
+static void CursorUpdateMove(Cursor *cursor, Input *input)
 {
     bool isShiftHeld = InputIsButtonHeld(input, GLFW_KEY_LEFT_SHIFT) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_SHIFT);
 
@@ -253,22 +253,22 @@ static void CursorUpdateMove(Cursor *cursor, Input *input, Tree *tree)
     {
         if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_E))
         {
-            CursorShift(cursor, InsertDirectionUp, tree);
+            CursorShift(cursor, InsertDirectionUp);
         }
 
         if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_D))
         {
-            CursorShift(cursor, InsertDirectionDown, tree);
+            CursorShift(cursor, InsertDirectionDown);
         }
 
         if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_S))
         {
-            CursorShift(cursor, InsertDirectionLeft, tree);
+            CursorShift(cursor, InsertDirectionLeft);
         }
 
         if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_F))
         {
-            CursorShift(cursor, InsertDirectionRight, tree);
+            CursorShift(cursor, InsertDirectionRight);
         }
     }
     else
@@ -296,37 +296,37 @@ static void CursorUpdateMove(Cursor *cursor, Input *input, Tree *tree)
 
     if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_BACKSPACE))
     {
-        CursorDeleteHere(cursor, tree);
+        CursorDeleteHere(cursor);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_SPACE))
     {
-        CursorStartInsert(cursor, InsertDirectionCenter, tree);
+        CursorStartInsert(cursor, InsertDirectionCenter);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_I))
     {
-        CursorStartInsert(cursor, InsertDirectionUp, tree);
+        CursorStartInsert(cursor, InsertDirectionUp);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_K))
     {
-        CursorStartInsert(cursor, InsertDirectionDown, tree);
+        CursorStartInsert(cursor, InsertDirectionDown);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_J))
     {
-        CursorStartInsert(cursor, InsertDirectionLeft, tree);
+        CursorStartInsert(cursor, InsertDirectionLeft);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_L))
     {
-        CursorStartInsert(cursor, InsertDirectionRight, tree);
+        CursorStartInsert(cursor, InsertDirectionRight);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_X))
     {
-        CursorCut(cursor, tree);
+        CursorCut(cursor);
     }
 
     if (InputIsButtonPressed(input, GLFW_KEY_C))
@@ -336,7 +336,7 @@ static void CursorUpdateMove(Cursor *cursor, Input *input, Tree *tree)
 
     if (InputIsButtonPressed(input, GLFW_KEY_V))
     {
-        CursorPaste(cursor, tree);
+        CursorPaste(cursor);
     }
 }
 
@@ -358,7 +358,7 @@ static bool ListMatchesString(List_char *list, char *string)
     return string[list->count] == '\0';
 }
 
-static void CursorUpdateInsert(Cursor *cursor, Input *input, Tree *tree, Font *font)
+static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 {
     bool isCanceling = InputIsButtonPressed(input, GLFW_KEY_ESCAPE);
     bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
@@ -376,7 +376,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Tree *tree, Font *f
         if (cursor->insertText.count == 0 && defaultChildKind->isPin)
         {
             Block *block = BlockNew(BlockKindIdPin, parent, childI);
-            CursorAddChild(cursor, parent, block, childI, tree);
+            CursorAddChild(cursor, parent, block, childI);
             CursorEndInsert(cursor);
 
             return;
@@ -393,7 +393,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Tree *tree, Font *f
             }
 
             Block *block = BlockNew(kindId, parent, childI);
-            CursorAddChild(cursor, parent, block, childI, tree);
+            CursorAddChild(cursor, parent, block, childI);
             CursorEndInsert(cursor);
 
             return;
@@ -402,7 +402,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Tree *tree, Font *f
         if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
         {
             Block *block = BlockNewIdentifier(cursor->insertText.data, cursor->insertText.count, font, parent, childI);
-            CursorAddChild(cursor, parent, block, childI, tree);
+            CursorAddChild(cursor, parent, block, childI);
             CursorEndInsert(cursor);
 
             return;
@@ -423,16 +423,16 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Tree *tree, Font *f
     }
 }
 
-void CursorUpdate(Cursor *cursor, Input *input, Tree *tree, Font *font)
+void CursorUpdate(Cursor *cursor, Input *input, Font *font)
 {
     switch (cursor->state)
     {
     case CursorStateMove: {
-        CursorUpdateMove(cursor, input, tree);
+        CursorUpdateMove(cursor, input);
         break;
     }
     case CursorStateInsert: {
-        CursorUpdateInsert(cursor, input, tree, font);
+        CursorUpdateInsert(cursor, input, font);
         break;
     }
     }
@@ -560,7 +560,7 @@ void CursorRight(Cursor *cursor)
 }
 
 // TODO: Most of this logic should be part of the block, it should know how to delete one of it's children.
-void CursorDeleteHere(Cursor *cursor, Tree *tree)
+void CursorDeleteHere(Cursor *cursor)
 {
     if (!cursor->block->parent)
     {
@@ -570,7 +570,7 @@ void CursorDeleteHere(Cursor *cursor, Tree *tree)
     BlockKind *parentKind = &BlockKinds[cursor->block->parent->kindId];
     BlockParentData *parentParentData = &cursor->block->parent->data.parent;
 
-    TreeRequestUpdate(tree, cursor->block->y);
+    BlockMarkNeedsUpdate(cursor->block);
 
     if (parentKind->isGrowable && cursor->block->childI >= parentKind->defaultChildrenCount)
     {
