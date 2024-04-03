@@ -41,6 +41,9 @@
  * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
  */
 
+static const float DefaultFontSize = 16;
+static const char *FontPath = "DejaVuSans.ttf";
+
 typedef struct WindowData
 {
     Input *input;
@@ -101,7 +104,7 @@ int main(int argumentCount, char **arguments)
     glfwWindowHint(GLFW_DOUBLEBUFFER, 1);
     GLFWwindow *window = glfwCreateWindow(800, 600, "Structural Editor", NULL, NULL);
     glfwMakeContextCurrent(window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     Input input = InputNew();
     Camera camera = CameraNew();
@@ -161,7 +164,7 @@ int main(int argumentCount, char **arguments)
         data[dataCount] = '\0';
     }
 
-    Font *font = FontNew("DejaVuSans.ttf", 16);
+    Font *font = FontNew(FontPath, DefaultFontSize);
     Theme theme = (Theme){
         .backgroundColor = ColorNew255(51, 51, 51),
         .evenColor = ColorNew255(40, 40, 40),
@@ -174,11 +177,11 @@ int main(int argumentCount, char **arguments)
     BlockKindsInit();
     BlockKindsUpdateTextSize(font);
 
+    Tree tree = TreeNew();
+    tree.updatedY = -100;
     Parser parser = ParserNew(LexerNew(data, dataCount), font);
     Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
     Cursor cursor = CursorNew(rootBlock);
-
-    BlockUpdateTree(rootBlock, 0, 0);
 
     printf("Block count: %llu\n", BlockCountAll(rootBlock));
     printf("Block size individual: %zd\n", sizeof(Block));
@@ -195,7 +198,35 @@ int main(int argumentCount, char **arguments)
 
         // printf("%f\n", 1.0f / deltaTime);
 
-        CursorUpdate(&cursor, &input, rootBlock, font);
+//         bool didCameraZoom = false;
+//
+//         if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_UP))
+//         {
+//             CameraZoomIn(&camera);
+//             didCameraZoom = true;
+//         }
+//
+//         if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_DOWN))
+//         {
+//             CameraZoomOut(&camera);
+//             didCameraZoom = true;
+//         }
+//
+//         if (didCameraZoom)
+//         {
+//             FontDelete(font);
+//             font = FontNew(FontPath, DefaultFontSize * camera.zoom);
+//
+//             // TODO: Don't recalculate text size every time you zoom, it's just a multiple of the current text size (with the same font).
+//             // BlockKindsUpdateTextSize(font);
+//             // BlockUpdateTextSize(rootBlock, font);
+//             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
+//         }
+
+        CursorUpdate(&cursor, &input, &tree, font);
+        int32_t updateMaxY = (int32_t)(camera.y + camera.height + 400);
+        BlockUpdateTree(rootBlock, 0, 0, &tree, updateMaxY);
+        tree.updatedY = updateMaxY;
         CameraUpdate(&camera, &cursor, rootBlock, deltaTime);
         InputUpdate(&input);
 

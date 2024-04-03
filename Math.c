@@ -31,6 +31,11 @@ float MathFloatMin(float a, float b)
     return aIsMin * a + !aIsMin * b;
 }
 
+float MathFloatClamp(float value, float min, float max)
+{
+    return MathFloatMin(max, MathFloatMax(value, min));
+}
+
 float MathFloatAbs(float a)
 {
     float aIsNegative = (float)(a < 0);

@@ -277,6 +277,7 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
         .kindId = kindId,
         .parent = parent,
         .childI = childI,
+        .height = -1,
     };
 
     if (kindId == BlockKindIdIdentifier)
@@ -472,15 +473,26 @@ uint64_t BlockCountAll(Block *block)
     return count;
 }
 
-// TODO: Have a Tree struct that contains a reference to the root block, it should have a method TreeMarkDirty which will
-// be used instead of calling BlockUpdateTree on the root node. Have a method TreeUpdate which is called once per frame,
-// and calls BlockUpdateTree on the root node if it is dirty, the unmarks the dirty flag. This is to prevent multiple
-// redundant calls to BlockUpdateTree per frame, when it really only needs to be called once before drawing if the tree
-// was modified.
-// TODO: Per frame store a list (hashmap?, check how many blocks are going to be dirty at a time) of blocks that are dirty, (when marking a block as dirty also mark all of it's parents as dirty).
-// When updating only recompute dirty blocks. Also have a flag to ignore the list and recompute all blocks, eg. for just after a parse when you don't want to waste time adding to/checking the list
-// because you know they're all dirty.
-void BlockUpdateTree(Block *block, int32_t x, int32_t y)
+void BlockUpdateTextSize(Block *block, Font *font)
+{
+    if (block->kindId == BlockKindIdIdentifier)
+    {
+        BlockIdentifierData *identifierData = &block->data.identifier;
+        GetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, font);
+
+        return;
+    }
+
+    int32_t childrenCount = BlockGetChildrenCount(block);
+
+    for (int32_t i = 0; i < childrenCount; i++)
+    {
+        Block *child = block->data.parent.children.data[i];
+        BlockUpdateTextSize(child, font);
+    }
+}
+
+void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t maxY)
 {
     block->x = x;
     block->y = y;
@@ -517,13 +529,21 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
         {
             Block *child = block->data.parent.children.data[i];
 
-            BlockUpdateTree(child, x, y);
+            if (child->y + child->height >= tree->updatedY || child->height == -1)
+            {
+                BlockUpdateTree(child, x, y, tree, maxY);
+            }
 
             x += child->width + BlockPadding;
             y += child->height + BlockPadding;
 
             maxWidth = MathInt32Max(maxWidth, x - block->x);
             x = startX;
+
+            if (child->y > maxY)
+            {
+                break;
+            }
         }
     }
     else
@@ -534,7 +554,10 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
         {
             Block *child = block->data.parent.children.data[i];
 
-            BlockUpdateTree(child, x, y);
+            if (child->y + child->height >= tree->updatedY || child->height == -1)
+            {
+                BlockUpdateTree(child, x, y, tree, maxY);
+            }
 
             x += child->width + BlockPadding;
 
@@ -544,6 +567,11 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
             }
 
             maxHeight = MathInt32Max(maxHeight, child->height + BlockPadding);
+
+            if (child->y > maxY)
+            {
+                break;
+            }
         }
 
         maxWidth = MathInt32Max(maxWidth, x - block->x);
@@ -567,30 +595,41 @@ static Color BlockGetDepthColor(int32_t depth, Theme *theme)
 
 static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, int32_t minY)
 {
-    int32_t minI = 0;
-    int32_t maxI = childrenCount - 1;
-
-    if (maxI < 1)
+    for (int32_t i = 0; i < childrenCount; i++)
     {
-        return 0;
-    }
-
-    while (minI != maxI)
-    {
-        int32_t i = (minI + maxI) / 2;
         Block *child = block->data.parent.children.data[i];
 
-        if (child->y + child->height < minY)
+        if (child->y + child->height > minY)
         {
-            minI += 1;
-        }
-        else
-        {
-            maxI = i;
+            return i;
         }
     }
 
-    return minI;
+    return childrenCount - 1;
+    //     int32_t minI = 0;
+    //     int32_t maxI = childrenCount - 1;
+    //
+    //     if (maxI < 1)
+    //     {
+    //         return 0;
+    //     }
+    //
+    //     while (minI != maxI)
+    //     {
+    //         int32_t i = (minI + maxI) / 2;
+    //         Block *child = block->data.parent.children.data[i];
+    //
+    //         if (child->y + child->height < minY)
+    //         {
+    //             minI += 1;
+    //         }
+    //         else
+    //         {
+    //             maxI = i;
+    //         }
+    //     }
+    //
+    //     return minI;
 }
 
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme)

@@ -3,6 +3,7 @@
 #include "Math.h"
 
 const float PanSpeed = 10.0f;
+const float ZoomIncrement = 0.25f;
 
 Camera CameraNew(float windowWidth, float windowHeight)
 {
@@ -11,6 +12,7 @@ Camera CameraNew(float windowWidth, float windowHeight)
         .y = 0.0f,
         .width = 0.0f,
         .height = 0.0f,
+        .zoom = 1.0f,
     };
 }
 
@@ -42,4 +44,14 @@ void CameraUpdate(Camera *camera, Cursor *cursor, Block *rootBlock, float deltaT
     float delta = PanSpeed * deltaTime;
     camera->x = MathLazyLerp(camera->x, targetX, delta, stopDistance);
     camera->y = MathLazyLerp(camera->y, targetY, delta, stopDistance);
+}
+
+void CameraZoomIn(Camera *camera)
+{
+    camera->zoom += ZoomIncrement;
+}
+
+void CameraZoomOut(Camera *camera)
+{
+    camera->zoom = MathFloatMax(camera->zoom - ZoomIncrement, ZoomIncrement);
 }
