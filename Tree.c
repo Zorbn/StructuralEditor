@@ -13,5 +13,4 @@ Tree TreeNew()
 void TreeRequestUpdate(Tree *tree, int y)
 {
     tree->updatedY = MathInt32Min(tree->updatedY, y);
-    printf("%d\n", tree->updatedY);
 }

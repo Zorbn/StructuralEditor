@@ -277,7 +277,7 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
         .kindId = kindId,
         .parent = parent,
         .childI = childI,
-        .height = -1,
+        .y = INT32_MAX,
     };
 
     if (kindId == BlockKindIdIdentifier)
@@ -529,7 +529,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t max
         {
             Block *child = block->data.parent.children.data[i];
 
-            if (child->y + child->height >= tree->updatedY || child->height == -1)
+            if (child->y + child->height >= tree->updatedY)
             {
                 BlockUpdateTree(child, x, y, tree, maxY);
             }
@@ -554,7 +554,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y, Tree *tree, int32_t max
         {
             Block *child = block->data.parent.children.data[i];
 
-            if (child->y + child->height >= tree->updatedY || child->height == -1)
+            if (child->y + child->height >= tree->updatedY)
             {
                 BlockUpdateTree(child, x, y, tree, maxY);
             }
