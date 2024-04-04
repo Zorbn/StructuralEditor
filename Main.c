@@ -102,6 +102,7 @@ int main(int argumentCount, char **arguments)
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_DOUBLEBUFFER, 1);
+    glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
     GLFWwindow *window = glfwCreateWindow(800, 600, "Structural Editor", NULL, NULL);
     glfwMakeContextCurrent(window);
     glfwSwapInterval(0);
@@ -186,6 +187,7 @@ int main(int argumentCount, char **arguments)
     printf("Block kind size: %zd\n", sizeof(BlockKindId));
 
     double lastFrameTime = glfwGetTime();
+    bool isWindowHidden = true;
 
     while (!glfwWindowShouldClose(window))
     {
@@ -194,60 +196,45 @@ int main(int argumentCount, char **arguments)
         float deltaTime = (float)(frameTime - lastFrameTime);
         lastFrameTime = frameTime;
 
-        printf("%f\n", 1.0f / deltaTime);
+        // printf("%f\n", 1.0f / deltaTime);
 
-//         bool didCameraZoom = false;
-//
-//         if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_UP))
-//         {
-//             CameraZoomIn(&camera);
-//             didCameraZoom = true;
-//         }
-//
-//         if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_DOWN))
-//         {
-//             CameraZoomOut(&camera);
-//             didCameraZoom = true;
-//         }
-//
-//         if (didCameraZoom)
-//         {
-//             FontDelete(font);
-//             font = FontNew(FontPath, DefaultFontSize * camera.zoom);
-//
-//             // TODO: Don't recalculate text size every time you zoom, it's just a multiple of the current text size (with the same font).
-//             // BlockKindsUpdateTextSize(font);
-//             // BlockUpdateTextSize(rootBlock, font);
-//             BlockUpdateTree(rootBlock, rootBlock->x, rootBlock->y);
-//         }
+        bool didCameraZoom = false;
+
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_UP))
+        {
+            CameraZoomIn(&camera);
+            didCameraZoom = true;
+        }
+
+        if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_DOWN))
+        {
+            CameraZoomOut(&camera);
+            didCameraZoom = true;
+        }
+
+        if (didCameraZoom)
+        {
+            FontDelete(font);
+            font = FontNew(FontPath, DefaultFontSize * camera.zoom);
+        }
 
         CursorUpdate(&cursor, &input, font);
         BlockUpdateTree(rootBlock, 0, 0);
         CameraUpdate(&camera, &cursor, rootBlock, deltaTime);
         InputUpdate(&input);
+        FontUpdate(font);
 
         // Draw:
         sgp_begin((int32_t)camera.width, (int32_t)camera.height);
         sgp_viewport(0, 0, (int32_t)camera.width, (int32_t)camera.height);
 
-        sgp_translate(MathFloatFloor(-camera.x), MathFloatFloor(-camera.y));
+        sgp_translate(MathFloatFloor(-camera.x * camera.zoom), MathFloatFloor(-camera.y * camera.zoom));
 
-        // sgp_set_color(0.1f, 0.1f, 0.1f, 1.0f);
         ColorSet(theme.backgroundColor);
         sgp_clear();
 
-        // sgp_set_color(1.0f, 0.5f, 0.3f, 1.0f);
-        // sgp_draw_filled_rect(0, 0, 100, 50);
-
-        // sgp_set_color(1.0f, 1.0f, 1.0f, 1.0f);
-        // DrawText("hello", 10, 0, font);
-        // DrawText("abcd", 10, 0, font);
-        // DrawText("efgh", 10, 0, font);
-        // DrawText("ijkl", 10, 0, font);
-
-        // BlockDraw(cursorBlock, width / 2, height / 2, 0, height, font, &drawCommands);
-        BlockDraw(rootBlock, cursor.block, 0, (int32_t)camera.y, (int32_t)(camera.y + camera.height), font, &theme);
-        CursorDraw(&cursor, &theme, deltaTime);
+        BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme);
+        CursorDraw(&cursor, &camera, &theme, deltaTime);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, (int32_t)camera.width, (int32_t)camera.height);
@@ -258,6 +245,13 @@ int main(int argumentCount, char **arguments)
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        if (isWindowHidden)
+        {
+            glfwShowWindow(window);
+
+            isWindowHidden = false;
+        }
     }
 
     CursorDelete(&cursor);

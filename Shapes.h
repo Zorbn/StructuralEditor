@@ -2,4 +2,4 @@
 
 #include "inttypes.h"
 
-void DrawRect(float x, float y, float width, float height);
+void DrawRect(float x, float y, float width, float height, float scale);

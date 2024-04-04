@@ -3,6 +3,7 @@
 #include "Font.h"
 #include "Theme.h"
 #include "List.h"
+#include "Camera.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -123,6 +124,5 @@ bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind);
 void BlockReplaceChild(Block *block, Block *child, int32_t childI);
 void BlockInsertChild(Block *block, Block *child, int32_t childI);
 uint64_t BlockCountAll(Block *block);
-void BlockUpdateTextSize(Block *block, Font *font);
 void BlockUpdateTree(Block *block, int32_t x, int32_t y);
-void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, int32_t minY, int32_t maxY, Font *font, Theme *theme);
+void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme);

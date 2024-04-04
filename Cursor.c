@@ -438,7 +438,7 @@ void CursorUpdate(Cursor *cursor, Input *input, Font *font)
     }
 }
 
-void CursorDraw(Cursor *cursor, Theme *theme, float deltaTime)
+void CursorDraw(Cursor *cursor, Camera *camera, Theme *theme, float deltaTime)
 {
     ColorSet(theme->cursorColor);
 
@@ -465,10 +465,10 @@ void CursorDraw(Cursor *cursor, Theme *theme, float deltaTime)
     cursor->width = MathLerp(cursor->width, targetWidth, delta);
     cursor->height = MathLerp(cursor->height, targetHeight, delta);
 
-    DrawRect(cursor->x, cursor->y, cursor->width, LineWidth);
-    DrawRect(cursor->x, cursor->y + cursor->height - LineWidth, cursor->width, LineWidth);
-    DrawRect(cursor->x, cursor->y, LineWidth, cursor->height);
-    DrawRect(cursor->x + cursor->width - LineWidth, cursor->y, LineWidth, cursor->height);
+    DrawRect(cursor->x, cursor->y, cursor->width, LineWidth, camera->zoom);
+    DrawRect(cursor->x, cursor->y + cursor->height - LineWidth, cursor->width, LineWidth, camera->zoom);
+    DrawRect(cursor->x, cursor->y, LineWidth, cursor->height, camera->zoom);
+    DrawRect(cursor->x + cursor->width - LineWidth, cursor->y, LineWidth, cursor->height, camera->zoom);
 }
 
 void CursorAscend(Cursor *cursor)

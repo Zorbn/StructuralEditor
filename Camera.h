@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Block.h"
-#include "Cursor.h"
+typedef struct Block Block;
+typedef struct Cursor Cursor;
 
 typedef struct Camera
 {

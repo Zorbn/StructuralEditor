@@ -39,6 +39,7 @@ typedef struct Font
     int id;
     int atlasDimensions;
     float size;
+    bool needsUpdate;
 } Font;
 
 static int FontStashRenderCreate(void *user, int width, int height)
@@ -85,8 +86,6 @@ static int FontStashRenderResize(void *user, int width, int height)
 static void FontStashRenderUpdate(void *user, int *rectangle, const uint8_t *data)
 {
     Font *font = (Font *)user;
-    int width = font->width;
-    int height = font->height;
 
     int x1 = rectangle[0];
     int y1 = rectangle[1];
@@ -97,7 +96,7 @@ static void FontStashRenderUpdate(void *user, int *rectangle, const uint8_t *dat
     {
         for (int ix = x1; ix < x2; ix++)
         {
-            int i = ix + iy * width;
+            int i = ix + iy * font->width;
             font->buffer[i * 4] = (uint8_t)255;
             font->buffer[i * 4 + 1] = (uint8_t)255;
             font->buffer[i * 4 + 2] = (uint8_t)255;
@@ -105,10 +104,7 @@ static void FontStashRenderUpdate(void *user, int *rectangle, const uint8_t *dat
         }
     }
 
-    sg_image_data imageData = {0};
-    imageData.subimage[0][0].ptr = font->buffer,
-    imageData.subimage[0][0].size = width * height * 4,
-    sg_update_image(font->image, &imageData);
+    font->needsUpdate = true;
 }
 
 static void FontStashRenderDraw(void *user, const float *vertices, const float *uvs, const uint32_t *colors, int vertexCount)
@@ -201,7 +197,22 @@ int FontDelete(Font *font)
     return 0;
 }
 
-int DrawText(const char *text, int32_t x, int32_t y, Font *font)
+void FontUpdate(Font *font)
+{
+    if (!font->needsUpdate)
+    {
+        return;
+    }
+
+    sg_image_data imageData = {0};
+    imageData.subimage[0][0].ptr = font->buffer,
+    imageData.subimage[0][0].size = font->width * font->height * 4,
+    sg_update_image(font->image, &imageData);
+
+    font->needsUpdate = false;
+}
+
+int FontDraw(const char *text, float x, float y, Font *font)
 {
     if (!text)
     {
@@ -227,12 +238,12 @@ int DrawText(const char *text, int32_t x, int32_t y, Font *font)
     float fontHeight = 0.0;
     fonsVertMetrics(font->context, NULL, NULL, &fontHeight);
     fonsSetBlur(font->context, 0);
-    fonsDrawText(font->context, (float)x, (float)y + fontHeight, text, NULL);
+    fonsDrawText(font->context, x, y + fontHeight, text, NULL);
 
     return 0;
 }
 
-int GetTextSize(const char *text, int *width, int *height, Font *font)
+int FontGetTextSize(const char *text, int *width, int *height, Font *font)
 {
     if (font->id == FONS_INVALID)
     {
