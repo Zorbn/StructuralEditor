@@ -218,7 +218,11 @@ static void CursorCopy(Cursor *cursor)
         return;
     }
 
-    free(cursor->clipboardBlock);
+    if (cursor->clipboardBlock)
+    {
+        BlockDelete(cursor->clipboardBlock);
+    }
+
     cursor->clipboardBlock = BlockCopy(cursor->block, NULL, 0);
     cursor->clipboardDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
 }
