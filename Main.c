@@ -50,6 +50,8 @@ typedef struct WindowData
 
 static void WindowKeyCallback(GLFWwindow *window, int key, int scanCode, int action, int modifiers)
 {
+    (void)scanCode, (void)modifiers;
+
     WindowData *windowData = glfwGetWindowUserPointer(window);
     InputUpdateButton(windowData->input, key, action);
 }

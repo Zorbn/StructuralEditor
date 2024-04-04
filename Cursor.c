@@ -234,7 +234,6 @@ static void CursorPaste(Cursor *cursor)
         return;
     }
 
-    BlockParentData *parentParentData = &cursor->block->parent->data.parent;
     Block *pastedBlock = BlockCopy(cursor->clipboardBlock, cursor->block->parent, cursor->block->childI);
 
     BlockMarkNeedsUpdate(cursor->block);

@@ -325,6 +325,7 @@ Block *BlockCopy(Block *other, Block *parent, int32_t childI)
 
     *block = *other;
     block->parent = parent;
+    block->childI = childI;
 
     if (other->kindId == BlockKindIdIdentifier)
     {

@@ -9,6 +9,7 @@ add_executable(StructuralEditor Main.c Implementations.c Font.c Lexer.c Parser.c
 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    target_compile_options(StructuralEditor PRIVATE /W4 /WX)
 endif()
 
 set(GLFW_BUILD_EXAMPLES OFF)

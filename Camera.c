@@ -6,7 +6,7 @@
 const float PanSpeed = 10.0f;
 const float ZoomIncrement = 0.25f;
 
-Camera CameraNew(float windowWidth, float windowHeight)
+Camera CameraNew(void)
 {
     return (Camera){
         .x = 0.0f,
@@ -14,6 +14,7 @@ Camera CameraNew(float windowWidth, float windowHeight)
         .width = 0.0f,
         .height = 0.0f,
         .zoom = 1.0f,
+        .needsTeleport = true,
     };
 }
 
@@ -39,6 +40,14 @@ void CameraUpdate(Camera *camera, Cursor *cursor, Block *rootBlock, float deltaT
         targetY += cursor->block->height * 0.5f;
     }
 
+    if (camera->needsTeleport)
+    {
+        camera->x = targetX;
+        camera->y = targetY;
+
+        camera->needsTeleport = false;
+    }
+
     const float stopDistance = 1.0f;
 
     float delta = PanSpeed * deltaTime;
@@ -49,9 +58,11 @@ void CameraUpdate(Camera *camera, Cursor *cursor, Block *rootBlock, float deltaT
 void CameraZoomIn(Camera *camera)
 {
     camera->zoom += ZoomIncrement;
+    camera->needsTeleport = true;
 }
 
 void CameraZoomOut(Camera *camera)
 {
     camera->zoom = MathFloatMax(camera->zoom - ZoomIncrement, ZoomIncrement);
+    camera->needsTeleport = true;
 }

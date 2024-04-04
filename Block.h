@@ -105,7 +105,7 @@ typedef struct Block
     BlockKindId kindId;
 } Block;
 
-const int32_t BlockPadding;
+extern const int32_t BlockPadding;
 
 void BlockKindsInit(void);
 void BlockKindsDeinit(void);
