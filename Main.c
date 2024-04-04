@@ -26,8 +26,6 @@
 
 /*
  * TODO, Missing things from the other version:
- * Zooming,
- *  - On zoom, for fonts: UpdateTreeFont, UpdateTree and BlockKindsUpdateTextSize with new font size.
  * Saving,
  * Text insert display,
  *

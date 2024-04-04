@@ -39,10 +39,6 @@ void CameraUpdate(Camera *camera, Cursor *cursor, Block *rootBlock, float deltaT
         targetY += cursor->block->height * 0.5f;
     }
 
-    // Stop once the camera is close enough, otherwise lerping would end with the camera moving tiny
-    // subpixel amounts each frame, which would be mostly unoticable except they cause text to jitter
-    // as it tries to snap to screen pixels.
-    // TODO: After adding zoom this should be MathFloatCeil(camera->zoom);
     const float stopDistance = 1.0f;
 
     float delta = PanSpeed * deltaTime;
