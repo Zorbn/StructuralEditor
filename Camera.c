@@ -29,7 +29,11 @@ void CameraUpdate(Camera *camera, Cursor *cursor, Block *rootBlock, float deltaT
     float targetX = -BlockPadding * 2.0f;
     targetX = MathFloatMin(targetX, rootBlock->x + rootBlock->width * 0.5f - width * 0.5f);
 
-    float targetY = cursor->block->y - height * 0.5f;
+    int32_t cursorBlockGlobalX = 0;
+    int32_t cursorBlockGlobalY = 0;
+    BlockGetGlobalPosition(cursor->block, &cursorBlockGlobalX, &cursorBlockGlobalY);
+
+    float targetY = cursorBlockGlobalY - height * 0.5f;
 
     if (cursor->block->height > height)
     {
