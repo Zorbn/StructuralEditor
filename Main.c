@@ -233,7 +233,7 @@ int main(int argumentCount, char **arguments)
         ColorSet(theme.backgroundColor);
         sgp_clear();
 
-        BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme);
+        BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme, 0, 0);
         CursorDraw(&cursor, &camera, &theme, deltaTime);
 
         sg_pass_action passAction = {0};

@@ -435,6 +435,22 @@ DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI)
     return &kind->defaultChildren[childI];
 }
 
+void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y)
+{
+    *x = block->x;
+    *y = block->y;
+
+    Block *parent = block->parent;
+
+    while (parent)
+    {
+        *x += parent->x;
+        *y += parent->y;
+
+        parent = parent->parent;
+    }
+}
+
 bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind)
 {
     if (!block->parent)
@@ -502,38 +518,43 @@ uint64_t BlockCountAll(Block *block)
 
 void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 {
-    if (block->y != INT32_MAX)
-    {
-        return;
-    }
+    bool needsUpdate = block->y == INT32_MAX;
 
     block->x = x;
     block->y = y;
+
+    if (!needsUpdate)
+    {
+        return;
+    }
 
     int32_t textWidth, textHeight;
     BlockGetTextSize(block, &textWidth, &textHeight);
 
     int32_t childrenCount = BlockGetChildrenCount(block);
 
-    x += BlockPadding;
+    int32_t localX = 0;
+    int32_t localY = 0;
+
+    localX += BlockPadding;
 
     if (childrenCount > 0)
     {
-        y += BlockPadding;
+        localY += BlockPadding;
     }
     else
     {
-        y += textHeight;
+        localY += textHeight;
     }
 
     const BlockKind *kind = &BlockKinds[block->kindId];
 
     if (!kind->isTextInfix)
     {
-        x += textWidth + BlockPadding;
+        localX += textWidth + BlockPadding;
     }
 
-    int32_t startX = x;
+    int32_t startX = localX;
     int32_t maxWidth = 0;
 
     if (kind->isVertical)
@@ -542,13 +563,13 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
         {
             Block *child = block->data.parent.children.data[i];
 
-            BlockUpdateTree(child, x, y);
+            BlockUpdateTree(child, localX, localY);
 
-            x += child->width + BlockPadding;
-            y += child->height + BlockPadding;
+            localX += child->width + BlockPadding;
+            localY += child->height + BlockPadding;
 
-            maxWidth = MathInt32Max(maxWidth, x - block->x);
-            x = startX;
+            maxWidth = MathInt32Max(maxWidth, localX);
+            localX = startX;
         }
     }
     else
@@ -559,25 +580,25 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
         {
             Block *child = block->data.parent.children.data[i];
 
-            BlockUpdateTree(child, x, y);
+            BlockUpdateTree(child, localX, localY);
 
-            x += child->width + BlockPadding;
+            localX += child->width + BlockPadding;
 
             if (i < childrenCount - 1 && kind->isTextInfix)
             {
-                x += textWidth + BlockPadding;
+                localX += textWidth + BlockPadding;
             }
 
             maxHeight = MathInt32Max(maxHeight, child->height + BlockPadding);
         }
 
-        maxWidth = MathInt32Max(maxWidth, x - block->x);
-        x = startX;
-        y += maxHeight;
+        maxWidth = MathInt32Max(maxWidth, localX);
+        localX = startX;
+        localY += maxHeight;
     }
 
     block->width = maxWidth;
-    block->height = y - block->y;
+    block->height = localY;
 }
 
 static Color BlockGetDepthColor(int32_t depth, Theme *theme)
@@ -590,7 +611,7 @@ static Color BlockGetDepthColor(int32_t depth, Theme *theme)
     return theme->oddColor;
 }
 
-static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, Camera *camera)
+static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, Camera *camera, int32_t y)
 {
     int32_t minI = 0;
     int32_t maxI = childrenCount - 1;
@@ -605,7 +626,7 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
         int32_t i = (minI + maxI) / 2;
         Block *child = block->data.parent.children.data[i];
 
-        if (child->y + child->height < camera->y)
+        if (y + child->y + child->height < camera->y)
         {
             minI += 1;
         }
@@ -618,8 +639,11 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
     return minI;
 }
 
-void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme)
+void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme, int32_t x, int32_t y)
 {
+    x += block->x;
+    y += block->y;
+
     if (block->kindId == BlockKindIdPin)
     {
         ColorSet(theme->pinColor);
@@ -629,11 +653,11 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, 
         ColorSet(BlockGetDepthColor(depth, theme));
     }
 
-    DrawRect((float)block->x - BlockPadding, (float)block->y - BlockPadding, (float)block->width, (float)block->height, camera->zoom);
+    DrawRect((float)x - BlockPadding, (float)y - BlockPadding, (float)block->width, (float)block->height, camera->zoom);
 
     ColorSet(theme->textColor);
 
-    int32_t textY = block->y - BlockPadding / 2;
+    int32_t textY = y - BlockPadding / 2;
     int32_t childrenCount = BlockGetChildrenCount(block);
     bool hasChildren = childrenCount > 0;
 
@@ -651,7 +675,7 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, 
     // Allows writing -x, +x instead of 0-x, 0+x.
     if (!kind->isTextInfix)
     {
-        FontDraw(text, block->x * camera->zoom, textY * camera->zoom, font);
+        FontDraw(text, x * camera->zoom, textY * camera->zoom, font);
     }
 
     if (!hasChildren)
@@ -659,22 +683,22 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, 
         return;
     }
 
-    int32_t firstVisibleI = BlockFindFirstVisibleChildI(block, childrenCount, camera);
+    int32_t firstVisibleI = BlockFindFirstVisibleChildI(block, childrenCount, camera, y);
 
     for (int32_t i = firstVisibleI; i < childrenCount; i++)
     {
         Block *child = block->data.parent.children.data[i];
 
-        if (child->y > camera->y + camera->height / camera->zoom)
+        if (y + child->y > camera->y + camera->height / camera->zoom)
         {
             break;
         }
 
-        BlockDraw(child, cursorBlock, depth + 1, camera, font, theme);
+        BlockDraw(child, cursorBlock, depth + 1, camera, font, theme, x, y);
 
         if (i < childrenCount - 1 && kind->isTextInfix)
         {
-            FontDraw(text, (child->x + child->width) * camera->zoom, textY * camera->zoom, font);
+            FontDraw(text, (x + child->x + child->width) * camera->zoom, textY * camera->zoom, font);
         }
     }
 }

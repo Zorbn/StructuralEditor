@@ -43,6 +43,11 @@ static bool CursorGetChildIndexInDirection(Cursor *cursor, InsertDirection direc
 {
     *childI = cursor->block->childI;
 
+    if (!cursor->block->parent)
+    {
+        return false;
+    }
+
     if (CursorIsVertical(cursor))
     {
         if (direction == InsertDirectionLeft || direction == InsertDirectionRight)
@@ -75,6 +80,10 @@ static bool CursorGetChildIndexInDirection(Cursor *cursor, InsertDirection direc
             *childI -= 1;
         }
     }
+
+    int32_t parentChildrenCount = BlockGetChildrenCount(cursor->block->parent);
+
+    *childI = MathInt32Wrap(*childI, parentChildrenCount);
 
     return true;
 }
@@ -184,8 +193,6 @@ static void CursorShift(Cursor *cursor, InsertDirection shiftDirection)
     {
         return;
     }
-
-    childI = MathInt32Clamp(childI, 0, parentParentData->children.count - 1);
 
     DefaultChildKind *otherDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
 
@@ -442,9 +449,13 @@ void CursorDraw(Cursor *cursor, Camera *camera, Theme *theme, float deltaTime)
     ColorSet(theme->cursorColor);
 
     Block *block = cursor->block;
+    int32_t blockGlobalX = 0;
+    int32_t blockGlobalY = 0;
 
-    float targetX = block->x - BlockPadding - LineWidth;
-    float targetY = block->y - BlockPadding - LineWidth;
+    BlockGetGlobalPosition(block, &blockGlobalX, &blockGlobalY);
+
+    float targetX = blockGlobalX - BlockPadding - LineWidth;
+    float targetY = blockGlobalY - BlockPadding - LineWidth;
     float targetWidth = block->width + LineWidth * 2;
     float targetHeight = block->height + LineWidth * 2;
 
@@ -504,15 +515,8 @@ static void CursorMove(Cursor *cursor, int32_t delta)
         return;
     }
 
-    int32_t nextI = (cursor->block->childI + delta);
+    int32_t nextI = MathInt32Wrap(cursor->block->childI + delta, parentChildrenCount);
 
-    // Make nextI positive so that it will always wrap correctly.
-    while (nextI < 0)
-    {
-        nextI += parentChildrenCount;
-    }
-
-    nextI %= parentChildrenCount;
     cursor->block = cursor->block->parent->data.parent.children.data[nextI];
 }
 

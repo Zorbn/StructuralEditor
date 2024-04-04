@@ -19,6 +19,17 @@ int32_t MathInt32Clamp(int32_t value, int32_t min, int32_t max)
     return MathInt32Min(max, MathInt32Max(value, min));
 }
 
+int32_t MathInt32Wrap(int32_t i, int32_t modulus)
+{
+    // Make i positive so that it will always wrap correctly.
+    while (i < 0)
+    {
+        i += modulus;
+    }
+
+    return i % modulus;
+}
+
 float MathFloatMax(float a, float b)
 {
     float aIsMax = (float)(a > b);
