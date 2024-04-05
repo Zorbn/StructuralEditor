@@ -375,12 +375,27 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
     const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
     Block *parent = cursor->block->parent;
 
+    const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[defaultChildKind->pinKind];
     SearchBarState searchState = SearchBarUpdate(&cursor->searchBar, input);
+
+    if (searchState == SearchBarStateUpdated)
+    {
+        SearchBarClearSearchResults(&cursor->searchBar);
+
+        if (cursor->searchBar.text.count != 0)
+        {
+            for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
+            {
+                BlockKindId kindId = insertBlocks->blockKindIds[i];
+                const BlockKind *kind = &BlockKinds[kindId];
+
+                SearchBarTryAddResult(&cursor->searchBar, kind->searchText);
+            }
+        }
+    }
 
     if (searchState == SearchBarStateConfirm && parent && defaultChildKind->isPin)
     {
-        const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[defaultChildKind->pinKind];
-
         if (cursor->searchBar.text.count == 0 && defaultChildKind->isPin)
         {
             Block *block = BlockNew(BlockKindIdPin, parent, childI);

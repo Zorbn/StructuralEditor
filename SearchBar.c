@@ -9,12 +9,14 @@ SearchBar SearchBarNew(void)
 {
     return (SearchBar){
         .text = ListNew_char(16),
+        .results = ListNew_CharPointer(16),
     };
 }
 
 void SearchBarDelete(SearchBar *searchBar)
 {
     ListDelete_char(&searchBar->text);
+    ListDelete_CharPointer(&searchBar->results);
 }
 
 static void SearchBarBackspace(SearchBar *searchBar, bool isControlHeld)
@@ -57,14 +59,18 @@ SearchBarState SearchBarUpdate(SearchBar *searchBar, Input *input)
     bool isControlHeld =
         InputIsButtonHeld(input, GLFW_KEY_LEFT_CONTROL) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_CONTROL);
 
+    bool wasUpdated = false;
+
     for (int32_t i = 0; i < input->typedChars.count; i++)
     {
         ListPush_char(&searchBar->text, input->typedChars.data[i]);
+        wasUpdated = true;
     }
 
     if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_BACKSPACE))
     {
         SearchBarBackspace(searchBar, isControlHeld);
+        wasUpdated = true;
     }
 
     if (isCanceling)
@@ -77,18 +83,54 @@ SearchBarState SearchBarUpdate(SearchBar *searchBar, Input *input)
         return SearchBarStateConfirm;
     }
 
-    return SearchBarStateInProgress;
+    return wasUpdated ? SearchBarStateUpdated : SearchBarStateIdle;
 }
 
 void SearchBarReset(SearchBar *searchBar)
 {
     ListReset_char(&searchBar->text);
+    SearchBarClearSearchResults(searchBar);
+}
+
+static bool SearchBarPartialMatches(SearchBar *searchBar, char *string)
+{
+    if (!string)
+    {
+        return false;
+    }
+
+    for (int32_t i = 0; i < searchBar->text.count; i++)
+    {
+        if (string[i] == '\0' || searchBar->text.data[i] != string[i])
+        {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool SearchBarTryAddResult(SearchBar *searchBar, char *result)
+{
+    if (SearchBarPartialMatches(searchBar, result))
+    {
+        ListPush_CharPointer(&searchBar->results, result);
+        return true;
+    }
+
+    return false;
+}
+
+void SearchBarClearSearchResults(SearchBar *searchBar)
+{
+    ListReset_CharPointer(&searchBar->results);
 }
 
 void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *theme)
 {
     sgp_push_transform();
-    sgp_translate(MathFloatFloor(camera->width * 0.5f), MathFloatFloor(camera->height * 0.5f));
+    sgp_translate(MathFloatFloor(camera->x * camera->zoom + camera->width * 0.5f),
+        MathFloatFloor(camera->y * camera->zoom + camera->height * 0.5f));
 
     ListPush_char(&searchBar->text, '\0');
 
@@ -101,11 +143,8 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
     float height = (float)iHeight / camera->zoom;
     float descent = (float)iDescent / camera->zoom;
 
-    float centerX = camera->x;
-    float centerY = camera->y;
-
-    float x = centerX - width;
-    float y = centerY - height * 0.5f;
+    float x = -width;
+    float y = -height * 0.5f;
 
     float backgroundX = x - BlockPadding;
     float backgroundY = y - descent - BlockPadding;
@@ -122,6 +161,37 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
     FontDraw(searchBar->text.data, MathFloatFloor(x * camera->zoom), MathFloatFloor(y * camera->zoom), font);
 
     ListPop_char(&searchBar->text);
+
+    y += height;
+
+    for (int32_t i = 0; i < searchBar->results.count; i++)
+    {
+        y += BlockPadding * 3;
+
+        char *result = searchBar->results.data[i];
+
+        int32_t resultIWidth = 0;
+        int32_t resultIHeight = 0;
+        int32_t resultIDescent = 0;
+        FontGetTextSize(result, &resultIWidth, &resultIHeight, NULL, &resultIDescent, font);
+
+        float resultWidth = (float)resultIWidth / camera->zoom;
+        float resultHeight = (float)resultIHeight / camera->zoom;
+        float resultDescent = (float)resultIDescent / camera->zoom;
+
+        float resultBackgroundX = x - BlockPadding;
+        float resultBackgroundY = y - resultDescent - BlockPadding;
+        float resultBackgroundWidth = resultWidth + BlockPadding * 2.0f;
+        float resultBackgroundHeight = resultHeight + BlockPadding * 2.0f;
+
+        ColorSet(theme->oddColor);
+        DrawRect(resultBackgroundX, resultBackgroundY, resultBackgroundWidth, resultBackgroundHeight, camera->zoom);
+
+        ColorSet(theme->textColor);
+        FontDraw(result, MathFloatFloor(x * camera->zoom), MathFloatFloor(y * camera->zoom), font);
+
+        y += resultHeight;
+    }
 
     // ColorSet(theme->cursorColor);
     // DrawRect(centerX, y - descent, LineWidth, (float)height, camera->zoom);

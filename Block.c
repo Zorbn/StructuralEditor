@@ -123,7 +123,7 @@ void BlockKindsInit(void)
     });
     BlockKinds[BlockKindIdFunction] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
-        .searchText = "fn",
+        .searchText = "function",
         .isVertical = true,
         .defaultChildren =
             (DefaultChildKind[]){
@@ -144,7 +144,7 @@ void BlockKindsInit(void)
     });
     BlockKinds[BlockKindIdLambdaFunction] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
-        .searchText = "fn",
+        .searchText = "function",
         .isVertical = true,
         .defaultChildren =
             (DefaultChildKind[]){
