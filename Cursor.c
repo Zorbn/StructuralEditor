@@ -4,14 +4,13 @@
 
 #include <GLFW/glfw3.h>
 
-static const float LineWidth = 3;
 static const float AnimationSpeed = 30.0f;
 
 Cursor CursorNew(Block *block)
 {
     return (Cursor){
         .block = block,
-        .insertText = ListNew_char(16),
+        .searchBar = SearchBarNew(),
         .state = CursorStateMove,
         .isFirstDraw = true,
     };
@@ -19,7 +18,7 @@ Cursor CursorNew(Block *block)
 
 void CursorDelete(Cursor *cursor)
 {
-    ListDelete_char(&cursor->insertText);
+    SearchBarDelete(&cursor->searchBar);
 
     if (cursor->clipboardBlock)
     {
@@ -139,7 +138,7 @@ static void CursorAddChild(Cursor *cursor, Block *parent, Block *child, int32_t 
 static void CursorEndInsert(Cursor *cursor)
 {
     cursor->state = CursorStateMove;
-    ListReset_char(&cursor->insertText);
+    SearchBarReset(&cursor->searchBar);
 }
 
 static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection)
@@ -370,20 +369,19 @@ static bool ListMatchesString(List_char *list, char *string)
 
 static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 {
-    bool isCanceling = InputIsButtonPressed(input, GLFW_KEY_ESCAPE);
-    bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
-
     int32_t childI;
     CursorGetChildInsertIndexInDirection(cursor, &childI);
 
     const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
     Block *parent = cursor->block->parent;
 
-    if (isConfirming && parent && defaultChildKind->isPin)
+    SearchBarState searchState = SearchBarUpdate(&cursor->searchBar, input);
+
+    if (searchState == SearchBarStateConfirm && parent && defaultChildKind->isPin)
     {
         const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[defaultChildKind->pinKind];
 
-        if (cursor->insertText.count == 0 && defaultChildKind->isPin)
+        if (cursor->searchBar.text.count == 0 && defaultChildKind->isPin)
         {
             Block *block = BlockNew(BlockKindIdPin, parent, childI);
             CursorAddChild(cursor, parent, block, childI);
@@ -397,7 +395,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
             BlockKindId kindId = insertBlocks->blockKindIds[i];
             const BlockKind *kind = &BlockKinds[kindId];
 
-            if (!ListMatchesString(&cursor->insertText, kind->searchText))
+            if (!ListMatchesString(&cursor->searchBar.text, kind->searchText))
             {
                 continue;
             }
@@ -411,7 +409,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 
         if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
         {
-            Block *block = BlockNewIdentifier(cursor->insertText.data, cursor->insertText.count, font, parent, childI);
+            Block *block = BlockNewIdentifier(cursor->searchBar.text.data, cursor->searchBar.text.count, font, parent, childI);
             CursorAddChild(cursor, parent, block, childI);
             CursorEndInsert(cursor);
 
@@ -419,17 +417,11 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
         }
     }
 
-    if (isCanceling)
+    if (searchState == SearchBarStateCancel)
     {
-        cursor->state = CursorStateMove;
-        ListReset_char(&cursor->insertText);
+        CursorEndInsert(cursor);
 
         return;
-    }
-
-    for (int32_t i = 0; i < input->typedChars.count; i++)
-    {
-        ListPush_char(&cursor->insertText, input->typedChars.data[i]);
     }
 }
 
@@ -448,10 +440,18 @@ void CursorUpdate(Cursor *cursor, Input *input, Font *font)
     }
 }
 
-void CursorDraw(Cursor *cursor, Camera *camera, Theme *theme, float deltaTime)
+static void CursorDrawMove(Cursor *cursor, Camera *camera, Theme *theme)
 {
     ColorSet(theme->cursorColor);
 
+    DrawRect(cursor->x, cursor->y, cursor->width, LineWidth, camera->zoom);
+    DrawRect(cursor->x, cursor->y + cursor->height - LineWidth, cursor->width, LineWidth, camera->zoom);
+    DrawRect(cursor->x, cursor->y, LineWidth, cursor->height, camera->zoom);
+    DrawRect(cursor->x + cursor->width - LineWidth, cursor->y, LineWidth, cursor->height, camera->zoom);
+}
+
+void CursorDraw(Cursor *cursor, Camera *camera, Font *font, Theme *theme, float deltaTime)
+{
     Block *block = cursor->block;
     int32_t blockGlobalX = 0;
     int32_t blockGlobalY = 0;
@@ -479,10 +479,17 @@ void CursorDraw(Cursor *cursor, Camera *camera, Theme *theme, float deltaTime)
     cursor->width = MathLerp(cursor->width, targetWidth, delta);
     cursor->height = MathLerp(cursor->height, targetHeight, delta);
 
-    DrawRect(cursor->x, cursor->y, cursor->width, LineWidth, camera->zoom);
-    DrawRect(cursor->x, cursor->y + cursor->height - LineWidth, cursor->width, LineWidth, camera->zoom);
-    DrawRect(cursor->x, cursor->y, LineWidth, cursor->height, camera->zoom);
-    DrawRect(cursor->x + cursor->width - LineWidth, cursor->y, LineWidth, cursor->height, camera->zoom);
+    switch (cursor->state)
+    {
+        case CursorStateMove: {
+            CursorDrawMove(cursor, camera, theme);
+            break;
+        }
+        case CursorStateInsert: {
+            SearchBarDraw(&cursor->searchBar, camera, font, theme);
+            break;
+        }
+    }
 }
 
 void CursorAscend(Cursor *cursor)

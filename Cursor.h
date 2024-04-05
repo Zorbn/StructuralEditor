@@ -3,6 +3,7 @@
 #include "Block.h"
 #include "Input.h"
 #include "Camera.h"
+#include "SearchBar.h"
 
 typedef enum InsertDirection
 {
@@ -21,11 +22,12 @@ typedef enum CursorState
 
 typedef struct Cursor
 {
+    SearchBar searchBar;
+
     Block *block;
     Block *clipboardBlock;
     DefaultChildKind *clipboardDefaultChildKind;
 
-    List_char insertText;
     InsertDirection insertDirection;
 
     CursorState state;
@@ -41,7 +43,7 @@ typedef struct Cursor
 Cursor CursorNew(Block *block);
 void CursorDelete(Cursor *cursor);
 void CursorUpdate(Cursor *cursor, Input *input, Font *font);
-void CursorDraw(Cursor *cursor, Camera *camera, Theme *theme, float deltaTime);
+void CursorDraw(Cursor *cursor, Camera *camera, Font *font, Theme *theme, float deltaTime);
 void CursorAscend(Cursor *cursor);
 void CursorDescend(Cursor *cursor);
 void CursorNext(Cursor *cursor);

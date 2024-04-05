@@ -2,7 +2,6 @@
 #include <crtdbg.h>
 #include <stdlib.h>
 
-#define SOKOL_GLCORE33
 #include <sokol_gfx.h>
 #include <sokol_gp.h>
 #include <sokol_log.h>
@@ -27,7 +26,6 @@
 /*
  * TODO, Missing things from the other version:
  * Saving,
- * Text insert display,
  *
  * TODO, New features:
  * Auto-complete for insert mode,
@@ -48,7 +46,7 @@ typedef struct WindowData
     Camera *camera;
 } WindowData;
 
-static void WindowKeyCallback(GLFWwindow *window, int key, int scanCode, int action, int modifiers)
+static void WindowKeyCallback(GLFWwindow *window, int32_t key, int32_t scanCode, int32_t action, int32_t modifiers)
 {
     (void)scanCode, (void)modifiers;
 
@@ -222,7 +220,6 @@ int main(int argumentCount, char **arguments)
         BlockUpdateTree(rootBlock, 0, 0);
         CameraUpdate(&camera, &cursor, rootBlock, deltaTime);
         InputUpdate(&input);
-        FontUpdate(font);
 
         // Draw:
         sgp_begin((int32_t)camera.width, (int32_t)camera.height);
@@ -234,7 +231,10 @@ int main(int argumentCount, char **arguments)
         sgp_clear();
 
         BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme, 0, 0);
-        CursorDraw(&cursor, &camera, &theme, deltaTime);
+        CursorDraw(&cursor, &camera, font, &theme, deltaTime);
+
+        // The font may require updates after drawing.
+        FontUpdate(font);
 
         sg_pass_action passAction = {0};
         sg_begin_default_pass(&passAction, (int32_t)camera.width, (int32_t)camera.height);

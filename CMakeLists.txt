@@ -5,7 +5,7 @@ set(CMAKE_C_STANDARD 11)
 include(CTest)
 enable_testing()
 
-add_executable(StructuralEditor Main.c Implementations.c Font.c Lexer.c Parser.c Block.c Math.c Color.c Cursor.c Input.c Shapes.c Camera.c)
+add_executable(StructuralEditor Main.c Implementations.c Font.c Lexer.c Parser.c Block.c Math.c Color.c Cursor.c Input.c Shapes.c Camera.c SearchBar.c Theme.c)
 
 if(MSVC)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)

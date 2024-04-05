@@ -2,6 +2,8 @@
 
 #include "Color.h"
 
+#include <inttypes.h>
+
 typedef struct Theme
 {
     Color backgroundColor;
@@ -11,3 +13,6 @@ typedef struct Theme
     Color cursorColor;
     Color pinColor;
 } Theme;
+
+extern const int32_t BlockPadding;
+extern const float LineWidth;

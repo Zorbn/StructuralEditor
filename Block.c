@@ -50,8 +50,6 @@ BlockKind BlockKindNew(BlockKind blockKind)
     return blockKind;
 }
 
-const int32_t BlockPadding = 6;
-
 const PinKindInsertBlocks PinInsertBlocks[] = {
     [PinKindExpression] = {
         .blockKindIds = (BlockKindId[]){
@@ -258,7 +256,7 @@ void BlockKindsUpdateTextSize(Font *font)
     {
         if (BlockKinds[i].text)
         {
-            FontGetTextSize(BlockKinds[i].text, &BlockKinds[i].textWidth, &BlockKinds[i].textHeight, font);
+            FontGetTextSize(BlockKinds[i].text, &BlockKinds[i].textWidth, &BlockKinds[i].textHeight, NULL, NULL, font);
         }
     }
 }
@@ -313,7 +311,7 @@ Block *BlockNewIdentifier(char *text, int32_t textCount, Font *font, Block *pare
     strncpy(identifierData->text, text, textCount);
     identifierData->text[textCount] = '\0';
 
-    FontGetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, font);
+    FontGetTextSize(identifierData->text, &identifierData->textWidth, &identifierData->textHeight, NULL, NULL, font);
 
     return block;
 }
