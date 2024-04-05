@@ -20,6 +20,7 @@ typedef struct SearchBar
 {
     List_char text;
     List_CharPointer results;
+    int32_t selectedI;
 } SearchBar;
 
 SearchBar SearchBarNew(void);

@@ -33,6 +33,7 @@
  * Support multiple files,
  *
  * TODO, Ideas:
+ * Add one pixel borders around certain UI elements, such as the search bar? Like the borders in lite.
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
  * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
  */

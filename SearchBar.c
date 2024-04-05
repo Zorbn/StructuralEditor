@@ -52,12 +52,36 @@ static void SearchBarBackspace(SearchBar *searchBar, bool isControlHeld)
     }
 }
 
+static void SearchBarConfirm(SearchBar *searchBar)
+{
+    if (searchBar->selectedI == 0)
+    {
+        return;
+    }
+
+    char *result = searchBar->results.data[searchBar->selectedI - 1];
+
+    if (!result)
+    {
+        return;
+    }
+
+    ListReset_char(&searchBar->text);
+
+    for (int32_t i = 0; result[i] != '\0'; i++)
+    {
+        ListPush_char(&searchBar->text, result[i]);
+    }
+}
+
 SearchBarState SearchBarUpdate(SearchBar *searchBar, Input *input)
 {
     bool isCanceling = InputIsButtonPressed(input, GLFW_KEY_ESCAPE);
     bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
     bool isControlHeld =
         InputIsButtonHeld(input, GLFW_KEY_LEFT_CONTROL) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_CONTROL);
+    bool isShiftHeld =
+        InputIsButtonHeld(input, GLFW_KEY_LEFT_SHIFT) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_SHIFT);
 
     bool wasUpdated = false;
 
@@ -73,6 +97,20 @@ SearchBarState SearchBarUpdate(SearchBar *searchBar, Input *input)
         wasUpdated = true;
     }
 
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_TAB))
+    {
+        if (isShiftHeld)
+        {
+            searchBar->selectedI -= 1;
+        }
+        else
+        {
+            searchBar->selectedI += 1;
+        }
+
+        searchBar->selectedI = MathInt32Wrap(searchBar->selectedI, searchBar->results.count + 1);
+    }
+
     if (isCanceling)
     {
         return SearchBarStateCancel;
@@ -80,6 +118,8 @@ SearchBarState SearchBarUpdate(SearchBar *searchBar, Input *input)
 
     if (isConfirming)
     {
+        SearchBarConfirm(searchBar);
+
         return SearchBarStateConfirm;
     }
 
@@ -124,6 +164,7 @@ bool SearchBarTryAddResult(SearchBar *searchBar, char *result)
 void SearchBarClearSearchResults(SearchBar *searchBar)
 {
     ListReset_CharPointer(&searchBar->results);
+    searchBar->selectedI = 0;
 }
 
 void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *theme)
@@ -151,9 +192,13 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
     float backgroundWidth = width + BlockPadding * 2.0f;
     float backgroundHeight = height + BlockPadding * 2.0f;
 
-    ColorSet(theme->cursorColor);
-    DrawRect(backgroundX - LineWidth, backgroundY - LineWidth, backgroundWidth + LineWidth * 2.0f,
-        backgroundHeight + LineWidth * 2.0f, camera->zoom);
+    if (searchBar->selectedI == 0)
+    {
+        ColorSet(theme->cursorColor);
+        DrawRect(backgroundX - LineWidth, backgroundY - LineWidth, backgroundWidth + LineWidth * 2.0f,
+            backgroundHeight + LineWidth * 2.0f, camera->zoom);
+    }
+
     ColorSet(theme->oddColor);
     DrawRect(backgroundX, backgroundY, backgroundWidth, backgroundHeight, camera->zoom);
 
@@ -183,6 +228,13 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
         float resultBackgroundY = y - resultDescent - BlockPadding;
         float resultBackgroundWidth = resultWidth + BlockPadding * 2.0f;
         float resultBackgroundHeight = resultHeight + BlockPadding * 2.0f;
+
+        if (searchBar->selectedI - 1 == i)
+        {
+            ColorSet(theme->cursorColor);
+            DrawRect(resultBackgroundX - LineWidth, resultBackgroundY - LineWidth, resultBackgroundWidth + LineWidth * 2.0f,
+                resultBackgroundHeight + LineWidth * 2.0f, camera->zoom);
+        }
 
         ColorSet(theme->oddColor);
         DrawRect(resultBackgroundX, resultBackgroundY, resultBackgroundWidth, resultBackgroundHeight, camera->zoom);
