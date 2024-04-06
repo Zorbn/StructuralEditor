@@ -25,9 +25,6 @@
 #include <string.h>
 
 /*
- * TODO, Missing things from the other version:
- * Saving,
- *
  * TODO, New features:
  * Search for text in tree,
  * Support multiple files,
@@ -134,17 +131,17 @@ int main(int argumentCount, char **arguments)
     sgp_setup(&sokolGpDescriptor);
     assert(sgp_is_valid());
 
+    char *path = "save.lua";
+
+    if (argumentCount >= 2)
+    {
+        path = arguments[1];
+    }
+
     char *data = NULL;
     int32_t dataCount = 0;
     {
-        char *path = "save.lua";
-
-        if (argumentCount >= 2)
-        {
-            path = arguments[1];
-        }
-
-        FILE *file = fopen(path, "r");
+        FILE *file = fopen(path, "rb");
         if (!file)
         {
             printf("Couldn't open file \"%s\"", path);
@@ -155,12 +152,10 @@ int main(int argumentCount, char **arguments)
         dataCount = ftell(file);
         fseek(file, 0, SEEK_SET);
 
-        data = malloc(dataCount + 1);
+        data = malloc(dataCount);
 
-        fread(data, dataCount, 1, file);
+        fread(data, sizeof(char), dataCount, file);
         fclose(file);
-
-        data[dataCount] = '\0';
     }
 
     Font *font = FontNew(FontPath, DefaultFontSize);
@@ -180,6 +175,7 @@ int main(int argumentCount, char **arguments)
     Parser parser = ParserNew(LexerNew(data, dataCount), font);
     Block *rootBlock = ParserParseStatement(&parser, NULL, 0);
     Cursor cursor = CursorNew(rootBlock);
+    Saver saver = SaverNew();
 
     printf("Block count: %llu\n", BlockCountAll(rootBlock));
     printf("Block size individual: %zd\n", sizeof(Block));
@@ -215,6 +211,27 @@ int main(int argumentCount, char **arguments)
         {
             FontDelete(font);
             font = FontNew(FontPath, DefaultFontSize * camera.zoom);
+        }
+
+        bool isControlHeld =
+            InputIsButtonHeld(&input, GLFW_KEY_LEFT_CONTROL) || InputIsButtonHeld(&input, GLFW_KEY_RIGHT_CONTROL);
+
+        if (isControlHeld && InputIsButtonPressed(&input, GLFW_KEY_S))
+        {
+            SaverReset(&saver);
+            SaverSave(&saver, rootBlock);
+
+            {
+                FILE *file = fopen(path, "w");
+                if (!file)
+                {
+                    printf("Couldn't open file \"%s\"", path);
+                    exit(EXIT_FAILURE);
+                }
+
+                fwrite(saver.writer.text.data, sizeof(char), saver.writer.text.count, file);
+                fclose(file);
+            }
         }
 
         CursorUpdate(&cursor, &input, font);
@@ -257,6 +274,7 @@ int main(int argumentCount, char **arguments)
         }
     }
 
+    SaverDelete(&saver);
     CursorDelete(&cursor);
     BlockDelete(rootBlock);
     FontDelete(font);

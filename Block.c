@@ -87,6 +87,7 @@ void BlockKindsInit(void)
     BlockKinds[BlockKindIdPin] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
         .text = ".",
+        .save = SaverSavePin,
     });
     BlockKinds[BlockKindIdDo] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
@@ -99,6 +100,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindStatement),
             },
         .defaultChildrenCount = 1,
+        .save = SaverSaveDo,
     });
     BlockKinds[BlockKindIdStatementList] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
@@ -109,6 +111,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindStatement),
             },
         .defaultChildrenCount = 1,
+        .save = SaverSaveStatementList,
     });
     BlockKinds[BlockKindIdFunctionHeader] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
@@ -120,6 +123,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindIdentifier),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveFunctionHeader,
     });
     BlockKinds[BlockKindIdFunction] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
@@ -131,6 +135,7 @@ void BlockKindsInit(void)
                 NewChild(BlockKindIdStatementList),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveFunction,
     });
     BlockKinds[BlockKindIdLambdaFunctionHeader] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
@@ -141,6 +146,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindIdentifier),
             },
         .defaultChildrenCount = 1,
+        .save = SaverSaveLambdaFunctionHeader,
     });
     BlockKinds[BlockKindIdLambdaFunction] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
@@ -152,6 +158,7 @@ void BlockKindsInit(void)
                 NewChild(BlockKindIdStatementList),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveLambdaFunction,
     });
     BlockKinds[BlockKindIdCase] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
@@ -164,6 +171,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindStatement),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveCase,
     });
     BlockKinds[BlockKindIdIfCases] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
@@ -175,6 +183,7 @@ void BlockKindsInit(void)
                 NewChild(BlockKindIdCase),
             },
         .defaultChildrenCount = 1,
+        .save = SaverSaveIfCases,
     });
     BlockKinds[BlockKindIdElseCase] = BlockKindNew((BlockKind){
         .pinKind = PinKindNone,
@@ -186,6 +195,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindStatement),
             },
         .defaultChildrenCount = 1,
+        .save = SaverSaveElseCase,
     });
     BlockKinds[BlockKindIdIf] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
@@ -197,6 +207,7 @@ void BlockKindsInit(void)
                 NewChild(BlockKindIdElseCase),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveIf,
     });
     BlockKinds[BlockKindIdAssignment] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
@@ -209,6 +220,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindExpression),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveAssignment,
     });
     BlockKinds[BlockKindIdAdd] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
@@ -223,6 +235,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindExpression),
             },
         .defaultChildrenCount = 3,
+        .save = SaverSaveAdd,
     });
     BlockKinds[BlockKindIdCall] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
@@ -235,10 +248,12 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindExpression),
             },
         .defaultChildrenCount = 2,
+        .save = SaverSaveCall,
     });
     BlockKinds[BlockKindIdIdentifier] = BlockKindNew((BlockKind){
         .pinKind = PinKindIdentifier,
         .defaultChildrenCount = 0,
+        .save = SaverSaveIdentifier,
     });
 }
 
@@ -390,6 +405,23 @@ void BlockMarkNeedsUpdate(Block *block)
         parent->y = INT32_MAX;
         parent = parent->parent;
     }
+}
+
+bool BlockContainsNonPin(Block *block)
+{
+    int32_t childrenCount = BlockGetChildrenCount(block);
+
+    for (int32_t i = 1; i < childrenCount; i++)
+    {
+        Block *child = block->data.parent.children.data[i];
+
+        if (child->kindId != BlockKindIdPin)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 int32_t BlockGetChildrenCount(Block *block)

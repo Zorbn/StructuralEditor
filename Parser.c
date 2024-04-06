@@ -69,6 +69,8 @@ Block *ParserParseDo(Parser *parser, Block *parent, int32_t childI)
         i += 1;
     }
 
+    ParserMatch(parser, "end");
+
     return doBlock;
 }
 

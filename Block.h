@@ -4,6 +4,7 @@
 #include "Theme.h"
 #include "List.h"
 #include "Camera.h"
+#include "Saver.h"
 
 #include <inttypes.h>
 #include <stdbool.h>
@@ -62,6 +63,8 @@ typedef struct BlockKind
     bool isTextInfix;
     DefaultChildKind *defaultChildren;
     int32_t defaultChildrenCount;
+
+    void (*save)(Saver *saver, Block *block);
 } BlockKind;
 
 const PinKindInsertBlocks PinInsertBlocks[];
@@ -114,6 +117,7 @@ Block *BlockNewIdentifier(char *text, int32_t textLength, Font *font, Block *par
 Block *BlockCopy(Block *other, Block *parent, int32_t childI);
 void BlockDelete(Block *block);
 void BlockMarkNeedsUpdate(Block *block);
+bool BlockContainsNonPin(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
