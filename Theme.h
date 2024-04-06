@@ -17,3 +17,4 @@ typedef struct Theme
 
 extern const int32_t BlockPadding;
 extern const float LineWidth;
+extern const float BorderWidth;

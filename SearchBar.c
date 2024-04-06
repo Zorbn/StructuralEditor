@@ -239,7 +239,7 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
     SearchBarGetSize(searchBar, camera, font, &background);
 
     ColorSet(theme->borderColor);
-    DrawRect(background.x - 1, background.y - 1, background.width + 2, background.height + 2, camera->zoom);
+    DrawRectBordered(background.x, background.y, background.width, background.height, camera->zoom, BorderWidth);
 
     ColorSet(theme->evenColor);
     DrawRect(background.x, background.y, background.width, background.height, camera->zoom);

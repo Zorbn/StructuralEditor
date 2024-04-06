@@ -33,7 +33,6 @@
  * Support multiple files,
  *
  * TODO, Ideas:
- * Add one pixel borders around certain UI elements, such as the search bar? Like the borders in lite.
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
  * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
  */
@@ -233,7 +232,7 @@ int main(int argumentCount, char **arguments)
         sgp_clear();
 
         ColorSet(theme.borderColor);
-        DrawRect(rootBlock->x - BlockPadding - 1.0f, rootBlock->y - BlockPadding - 1.0f, rootBlock->width + 2.0f, rootBlock->height + 2.0f, camera.zoom);
+        DrawRectBordered((float)rootBlock->x - BlockPadding, (float)rootBlock->y - BlockPadding, (float)rootBlock->width, (float)rootBlock->height, camera.zoom, BorderWidth);
         BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme, 0, 0);
         CursorDraw(&cursor, &camera, font, &theme, deltaTime);
 
