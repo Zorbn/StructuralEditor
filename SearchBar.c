@@ -167,82 +167,134 @@ void SearchBarClearSearchResults(SearchBar *searchBar)
     searchBar->selectedI = 0;
 }
 
+static void SearchBarGetResultSize(char *text, Camera *camera, Font *font, Rectangle *background, float *textX, float *textY)
+{
+    int32_t iWidth = 0;
+    int32_t iHeight = 0;
+    int32_t iDescent = 0;
+    FontGetTextSize(text, &iWidth, &iHeight, NULL, &iDescent, font);
+
+    float width = (float)iWidth / camera->zoom;
+    float height = (float)iHeight / camera->zoom;
+    float descent = (float)iDescent / camera->zoom;
+
+    *background = (Rectangle){
+        .x = -width - BlockPadding,
+        .y = (float)-BlockPadding,
+        .width = width + BlockPadding * 2,
+        .height = height + BlockPadding * 2,
+    };
+
+    if (textX)
+    {
+        *textX = background->x + BlockPadding;
+    }
+
+    if (textY)
+    {
+        *textY = background->y + descent + BlockPadding;
+    }
+}
+
+static void SearchBarGetSize(SearchBar *searchBar, Camera *camera, Font *font, Rectangle *background)
+{
+    ListPush_char(&searchBar->text, '\0');
+
+    SearchBarGetResultSize(searchBar->text.data, camera, font, background, NULL, NULL);
+
+    ListPop_char(&searchBar->text);
+
+    float x = background->x;
+    float y = background->y;
+    float width = background->width;
+    float height = background->height;
+
+    for (int32_t i = 0; i < searchBar->results.count; i++)
+    {
+        char *result = searchBar->results.data[i];
+
+        SearchBarGetResultSize(result, camera, font, background, NULL, NULL);
+
+        width = MathFloatMax(width, background->width);
+        height += BlockPadding + background->height;
+    }
+
+    *background = (Rectangle){
+        .x = x - BlockPadding,
+        .y = y - BlockPadding,
+        .width = width + BlockPadding * 2,
+        .height = height + BlockPadding * 2,
+    };
+}
+
 void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *theme)
 {
     sgp_push_transform();
     sgp_translate(MathFloatFloor(camera->x * camera->zoom + camera->width * 0.5f),
         MathFloatFloor(camera->y * camera->zoom + camera->height * 0.5f));
 
+    // TODO: Use rectangle draw.
+
+    Rectangle background = {0};
+    SearchBarGetSize(searchBar, camera, font, &background);
+
+    ColorSet(theme->borderColor);
+    DrawRect(background.x - 1, background.y - 1, background.width + 2, background.height + 2, camera->zoom);
+
+    ColorSet(theme->evenColor);
+    DrawRect(background.x, background.y, background.width, background.height, camera->zoom);
+
     ListPush_char(&searchBar->text, '\0');
 
-    int32_t iWidth = 0;
-    int32_t iHeight = 0;
-    int32_t iDescent = 0;
-    FontGetTextSize(searchBar->text.data, &iWidth, &iHeight, NULL, &iDescent, font);
-
-    float width = (float)iWidth / camera->zoom;
-    float height = (float)iHeight / camera->zoom;
-    float descent = (float)iDescent / camera->zoom;
-
-    float x = -width;
-    float y = -height * 0.5f;
-
-    float backgroundX = x - BlockPadding;
-    float backgroundY = y - descent - BlockPadding;
-    float backgroundWidth = width + BlockPadding * 2.0f;
-    float backgroundHeight = height + BlockPadding * 2.0f;
+    float textX = 0;
+    float textY = 0;
+    SearchBarGetResultSize(searchBar->text.data, camera, font, &background, &textX, &textY);
 
     if (searchBar->selectedI == 0)
     {
         ColorSet(theme->cursorColor);
-        DrawRect(backgroundX - LineWidth, backgroundY - LineWidth, backgroundWidth + LineWidth * 2.0f,
-            backgroundHeight + LineWidth * 2.0f, camera->zoom);
+        DrawRect(background.x - LineWidth, background.y - LineWidth, background.width + LineWidth * 2.0f,
+            background.height + LineWidth * 2.0f, camera->zoom);
     }
 
     ColorSet(theme->oddColor);
-    DrawRect(backgroundX, backgroundY, backgroundWidth, backgroundHeight, camera->zoom);
+    DrawRect(background.x, background.y, background.width, background.height, camera->zoom);
 
     ColorSet(theme->textColor);
-    FontDraw(searchBar->text.data, MathFloatFloor(x * camera->zoom), MathFloatFloor(y * camera->zoom), font);
+    FontDraw(searchBar->text.data, MathFloatFloor(textX * camera->zoom), MathFloatFloor(textY * camera->zoom), font);
 
     ListPop_char(&searchBar->text);
 
-    y += height;
+    float y = background.y;
+
+    y += background.height + BlockPadding;
 
     for (int32_t i = 0; i < searchBar->results.count; i++)
     {
-        y += BlockPadding * 3;
-
         char *result = searchBar->results.data[i];
 
-        int32_t resultIWidth = 0;
-        int32_t resultIHeight = 0;
-        int32_t resultIDescent = 0;
-        FontGetTextSize(result, &resultIWidth, &resultIHeight, NULL, &resultIDescent, font);
+        y += BlockPadding;
 
-        float resultWidth = (float)resultIWidth / camera->zoom;
-        float resultHeight = (float)resultIHeight / camera->zoom;
-        float resultDescent = (float)resultIDescent / camera->zoom;
-
-        float resultBackgroundX = x - BlockPadding;
-        float resultBackgroundY = y - resultDescent - BlockPadding;
-        float resultBackgroundWidth = resultWidth + BlockPadding * 2.0f;
-        float resultBackgroundHeight = resultHeight + BlockPadding * 2.0f;
+        Rectangle resultBackground = {0};
+        float resultTextY = 0;
+        SearchBarGetResultSize(result, camera, font, &resultBackground, NULL, &resultTextY);
+        resultBackground.y += y;
+        resultTextY += y;
 
         if (searchBar->selectedI - 1 == i)
         {
             ColorSet(theme->cursorColor);
-            DrawRect(resultBackgroundX - LineWidth, resultBackgroundY - LineWidth, resultBackgroundWidth + LineWidth * 2.0f,
-                resultBackgroundHeight + LineWidth * 2.0f, camera->zoom);
+            DrawRect(background.x - LineWidth, resultBackground.y - LineWidth, resultBackground.width + LineWidth * 2.0f,
+                resultBackground.height + LineWidth * 2.0f, camera->zoom);
         }
 
         ColorSet(theme->oddColor);
-        DrawRect(resultBackgroundX, resultBackgroundY, resultBackgroundWidth, resultBackgroundHeight, camera->zoom);
+        DrawRect(background.x, resultBackground.y, resultBackground.width, resultBackground.height, camera->zoom);
 
         ColorSet(theme->textColor);
-        FontDraw(result, MathFloatFloor(x * camera->zoom), MathFloatFloor(y * camera->zoom), font);
+        FontDraw(result, MathFloatFloor(textX * camera->zoom), MathFloatFloor(resultTextY * camera->zoom), font);
 
-        y += resultHeight;
+        y += resultBackground.height;
     }
 
     // ColorSet(theme->cursorColor);

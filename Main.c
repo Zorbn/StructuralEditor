@@ -17,6 +17,7 @@
 #include "Theme.h"
 #include "Camera.h"
 #include "Math.h"
+#include "Shapes.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -28,7 +29,6 @@
  * Saving,
  *
  * TODO, New features:
- * Auto-complete for insert mode,
  * Search for text in tree,
  * Support multiple files,
  *
@@ -167,6 +167,7 @@ int main(int argumentCount, char **arguments)
     Font *font = FontNew(FontPath, DefaultFontSize);
     Theme theme = (Theme){
         .backgroundColor = ColorNew255(51, 51, 51),
+        .borderColor = ColorNew255(0, 0, 0),
         .evenColor = ColorNew255(40, 40, 40),
         .oddColor = ColorNew255(33, 33, 33),
         .textColor = ColorNew255(253, 244, 193),
@@ -231,6 +232,8 @@ int main(int argumentCount, char **arguments)
         ColorSet(theme.backgroundColor);
         sgp_clear();
 
+        ColorSet(theme.borderColor);
+        DrawRect(rootBlock->x - BlockPadding - 1.0f, rootBlock->y - BlockPadding - 1.0f, rootBlock->width + 2.0f, rootBlock->height + 2.0f, camera.zoom);
         BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme, 0, 0);
         CursorDraw(&cursor, &camera, font, &theme, deltaTime);
 

@@ -7,6 +7,7 @@
 typedef struct Theme
 {
     Color backgroundColor;
+    Color borderColor;
     Color evenColor;
     Color oddColor;
     Color textColor;
