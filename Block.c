@@ -381,26 +381,9 @@ void BlockDelete(Block *block)
     free(block);
 }
 
-static void BlockMarkChildrenNeedsUpdate(Block *block)
-{
-    int32_t childrenCount = BlockGetChildrenCount(block);
-
-    for (int32_t i = 0; i < childrenCount; i++)
-    {
-        Block *child = block->data.parent.children.data[i];
-        child->y = INT32_MAX;
-        BlockMarkChildrenNeedsUpdate(child);
-    }
-}
-
-void BlockMarkNeedsUpdate(Block *block, bool includeChildren)
+void BlockMarkNeedsUpdate(Block *block)
 {
     block->y = INT32_MAX;
-
-    if (includeChildren)
-    {
-        BlockMarkChildrenNeedsUpdate(block);
-    }
 
     Block *parent = block->parent;
 

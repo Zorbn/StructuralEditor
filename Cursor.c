@@ -119,7 +119,7 @@ static void CommandUndo(Cursor *cursor, Command *command)
         else
         {
             BlockDeleteChild(command->data.insert.parent, command->data.insert.childI, true);
-            BlockMarkNeedsUpdate(command->data.insert.parent, false);
+            BlockMarkNeedsUpdate(command->data.insert.parent);
         }
 
         break;
@@ -142,7 +142,7 @@ static void CommandUndo(Cursor *cursor, Command *command)
 
         BlockReplaceChild(
             command->data.replace.parent, command->data.replace.oldChild, command->data.replace.childI, true);
-        BlockMarkNeedsUpdate(command->data.replace.oldChild, true);
+        BlockMarkNeedsUpdate(command->data.replace.oldChild);
 
         break;
     }
@@ -166,7 +166,7 @@ static void CommandUndo(Cursor *cursor, Command *command)
             BlockReplaceChild(command->data.delete.parent, command->data.delete.oldChild, command->data.delete.childI, true);
         }
 
-        BlockMarkNeedsUpdate(command->data.delete.oldChild, true);
+        BlockMarkNeedsUpdate(command->data.delete.oldChild);
 
         break;
     }
@@ -280,7 +280,7 @@ static bool CursorGetChildInsertIndexInDirection(Cursor *cursor, int32_t *childI
 
 static void CursorAddChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
 {
-    BlockMarkNeedsUpdate(cursor->block, true);
+    BlockMarkNeedsUpdate(cursor->block);
 
     if (cursor->insertDirection == InsertDirectionCenter)
     {
@@ -359,8 +359,8 @@ static void CursorShift(Cursor *cursor, InsertDirection shiftDirection)
         return;
     }
 
-    BlockMarkNeedsUpdate(cursor->block, true);
-    BlockMarkNeedsUpdate(parentParentData->children.data[childI], true);
+    BlockMarkNeedsUpdate(cursor->block);
+    BlockMarkNeedsUpdate(parentParentData->children.data[childI]);
 
     parentParentData->children.data[cursor->block->childI] = parentParentData->children.data[childI];
     parentParentData->children.data[childI]->childI = cursor->block->childI;
@@ -405,7 +405,7 @@ static void CursorPaste(Cursor *cursor)
 
     Block *pastedBlock = BlockCopy(cursor->clipboardBlock, cursor->block->parent, cursor->block->childI);
 
-    BlockMarkNeedsUpdate(cursor->block, true);
+    BlockMarkNeedsUpdate(cursor->block);
 
     CommandReplaceChild(cursor, cursor->block->parent, pastedBlock, cursor->block->childI);
 
@@ -763,7 +763,7 @@ void CursorDeleteHere(Cursor *cursor)
     }
 
     BlockDeleteResult deleteResult = CommandDeleteChild(cursor, parent, childI);
-    BlockMarkNeedsUpdate(parent, false);
+    BlockMarkNeedsUpdate(parent);
 
     BlockParentData *parentParentData = &parent->data.parent;
 
