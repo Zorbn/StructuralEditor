@@ -133,6 +133,7 @@ bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind);
 Block *BlockReplaceChild(Block *block, Block *child, int32_t childI, bool doDelete);
 void BlockInsertChild(Block *block, Block *child, int32_t childI);
 BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete);
+void BlockSwapChildren(Block *block, int32_t firstChildI, int32_t secondChildI);
 uint64_t BlockCountAll(Block *block);
 void BlockUpdateTree(Block *block, int32_t x, int32_t y);
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme, int32_t x, int32_t y);

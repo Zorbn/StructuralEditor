@@ -28,7 +28,6 @@
  * TODO, New features:
  * Search for text in tree,
  * Support multiple files,
- * Undo,
  * Redo,
  * Undo limit,
  *

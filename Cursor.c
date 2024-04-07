@@ -104,6 +104,23 @@ static BlockDeleteResult CommandDeleteChild(Cursor *cursor, Block *parent, int32
     return deleteResult;
 }
 
+static void CommandSwapChildren(Cursor *cursor, Block *parent, int32_t firstChildI, int32_t secondChildI)
+{
+    BlockSwapChildren(parent, firstChildI, secondChildI);
+
+    Command command = (Command){
+        .kind = CommandKindSwap,
+        .data.swap =
+            (CommandSwapData){
+                .parent = parent,
+                .firstChildI = firstChildI,
+                .secondChildI = secondChildI,
+            },
+    };
+
+    ListPush_Command(&cursor->commands, command);
+}
+
 static void CommandUndo(Cursor *cursor, Command *command)
 {
     switch (command->kind)
@@ -167,6 +184,16 @@ static void CommandUndo(Cursor *cursor, Command *command)
         }
 
         BlockMarkNeedsUpdate(command->data.delete.oldChild);
+
+        break;
+    }
+    case CommandKindSwap: {
+        BlockParentData *parentData = &command->data.swap.parent->data.parent;
+
+        BlockMarkNeedsUpdate(parentData->children.data[command->data.swap.firstChildI]);
+        BlockMarkNeedsUpdate(parentData->children.data[command->data.swap.secondChildI]);
+
+        BlockSwapChildren(command->data.swap.parent, command->data.swap.firstChildI, command->data.swap.secondChildI);
 
         break;
     }
@@ -344,29 +371,16 @@ static void CursorShift(Cursor *cursor, InsertDirection shiftDirection)
         return;
     }
 
-    BlockParentData *parentParentData = &cursor->block->parent->data.parent;
-
     int32_t childI;
     if (!CursorGetChildIndexInDirection(cursor, shiftDirection, &childI))
     {
         return;
     }
 
-    DefaultChildKind *otherDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
-
-    if (!BlockCanSwapWith(cursor->block, otherDefaultChildKind))
-    {
-        return;
-    }
-
     BlockMarkNeedsUpdate(cursor->block);
-    BlockMarkNeedsUpdate(parentParentData->children.data[childI]);
+    BlockMarkNeedsUpdate(cursor->block->parent->data.parent.children.data[childI]);
 
-    parentParentData->children.data[cursor->block->childI] = parentParentData->children.data[childI];
-    parentParentData->children.data[childI]->childI = cursor->block->childI;
-
-    parentParentData->children.data[childI] = cursor->block;
-    cursor->block->childI = childI;
+    CommandSwapChildren(cursor, cursor->block->parent, cursor->block->childI, childI);
 }
 
 static void CursorCopy(Cursor *cursor)

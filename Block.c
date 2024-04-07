@@ -570,6 +570,25 @@ BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete)
     };
 }
 
+void BlockSwapChildren(Block *block, int32_t firstChildI, int32_t secondChildI)
+{
+    BlockParentData *parentData = &block->data.parent;
+    Block *firstChild = parentData->children.data[firstChildI];
+    Block *secondChild = parentData->children.data[secondChildI];
+    DefaultChildKind *secondDefaultChildKind = BlockGetDefaultChild(block, secondChildI);
+
+    if (!BlockCanSwapWith(firstChild, secondDefaultChildKind))
+    {
+        return;
+    }
+
+    firstChild->childI = secondChildI;
+    secondChild->childI = firstChildI;
+
+    parentData->children.data[firstChildI] = secondChild;
+    parentData->children.data[secondChildI] = firstChild;
+}
+
 uint64_t BlockCountAll(Block *block)
 {
     uint64_t count = 1;
