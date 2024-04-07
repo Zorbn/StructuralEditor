@@ -196,6 +196,7 @@ int main(int argumentCount, char **arguments)
         // printf("%f\n", 1.0f / deltaTime);
 
         bool didCameraZoom = false;
+        bool didAbsorbInput = false;
 
         if (InputIsButtonPressedOrRepeat(&input, GLFW_KEY_PAGE_UP))
         {
@@ -211,6 +212,8 @@ int main(int argumentCount, char **arguments)
 
         if (didCameraZoom)
         {
+            didAbsorbInput = true;
+
             FontDelete(font);
             font = FontNew(FontPath, DefaultFontSize * camera.zoom);
         }
@@ -234,6 +237,13 @@ int main(int argumentCount, char **arguments)
                 fwrite(saver.writer.text.data, sizeof(char), saver.writer.text.count, file);
                 fclose(file);
             }
+
+            didAbsorbInput = true;
+        }
+
+        if (didAbsorbInput)
+        {
+            InputUpdate(&input);
         }
 
         CursorUpdate(&cursor, &input, font);

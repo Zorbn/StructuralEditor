@@ -304,6 +304,12 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
 
     for (int32_t i = 0; i < kind->defaultChildrenCount; i++)
     {
+        // Growable children don't need to be created by default, unless they're the only child.
+        if (i != 0 && i == kind->defaultChildrenCount - 1 && kind->isGrowable)
+        {
+            continue;
+        }
+
         if (kind->defaultChildren[i].isPin)
         {
             ListPush_BlockPointer(&block->data.parent.children, BlockNew(BlockKindIdPin, block, i));
@@ -398,7 +404,7 @@ bool BlockContainsNonPin(Block *block)
 {
     int32_t childrenCount = BlockGetChildrenCount(block);
 
-    for (int32_t i = 1; i < childrenCount; i++)
+    for (int32_t i = 0; i < childrenCount; i++)
     {
         Block *child = block->data.parent.children.data[i];
 
@@ -535,7 +541,7 @@ BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete)
     BlockParentData *parentData = &block->data.parent;
     Block *oldChild = parentData->children.data[childI];
 
-    if (kind->isGrowable && childI >= kind->defaultChildrenCount)
+    if (kind->isGrowable && childI != 0 && childI >= kind->defaultChildrenCount - 1)
     {
         // This isn't a default child, so it doesn't need to be preserved. Fully delete it.
         if (doDelete)
