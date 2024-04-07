@@ -33,7 +33,19 @@
  *
  * TODO, Ideas:
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
+ * Find node corresponding to position in file,
  * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
+ * Special editing modes for specific features, eg. (in Lua) comments, patterns, LuaLS annotations, etc.
+ *
+ * TODO, Lua constructs, including:
+ * Single/Multi-line comments,
+ * Local,
+ * Operators,
+ * Parenthesis in expressions,
+ * For loops and while loops,
+ * Tables ({[key] = value, ..}, {key = value, ..}, and {value, ..}),
+ * Return,
+ * Multi-return and multi-assignment,
  */
 
 static const float DefaultFontSize = 16;
