@@ -108,6 +108,12 @@ typedef struct Block
     BlockKindId kindId;
 } Block;
 
+typedef struct BlockDeleteResult
+{
+    Block *oldChild;
+    bool wasRemoved;
+} BlockDeleteResult;
+
 void BlockKindsInit(void);
 void BlockKindsDeinit(void);
 void BlockKindsUpdateTextSize(Font *font);
@@ -116,7 +122,7 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI);
 Block *BlockNewIdentifier(char *text, int32_t textLength, Font *font, Block *parent, int32_t childI);
 Block *BlockCopy(Block *other, Block *parent, int32_t childI);
 void BlockDelete(Block *block);
-void BlockMarkNeedsUpdate(Block *block);
+void BlockMarkNeedsUpdate(Block *block, bool includeChildren);
 bool BlockContainsNonPin(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
@@ -124,8 +130,9 @@ void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
 DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI);
 void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y);
 bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind);
-void BlockReplaceChild(Block *block, Block *child, int32_t childI);
+Block *BlockReplaceChild(Block *block, Block *child, int32_t childI, bool doDelete);
 void BlockInsertChild(Block *block, Block *child, int32_t childI);
+BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete);
 uint64_t BlockCountAll(Block *block);
 void BlockUpdateTree(Block *block, int32_t x, int32_t y);
 void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme, int32_t x, int32_t y);

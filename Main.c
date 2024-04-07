@@ -28,6 +28,9 @@
  * TODO, New features:
  * Search for text in tree,
  * Support multiple files,
+ * Undo,
+ * Redo,
+ * Undo limit,
  *
  * TODO, Ideas:
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",

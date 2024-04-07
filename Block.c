@@ -383,20 +383,24 @@ void BlockDelete(Block *block)
 
 static void BlockMarkChildrenNeedsUpdate(Block *block)
 {
-    block->y = INT32_MAX;
-
     int32_t childrenCount = BlockGetChildrenCount(block);
 
     for (int32_t i = 0; i < childrenCount; i++)
     {
         Block *child = block->data.parent.children.data[i];
+        child->y = INT32_MAX;
         BlockMarkChildrenNeedsUpdate(child);
     }
 }
 
-void BlockMarkNeedsUpdate(Block *block)
+void BlockMarkNeedsUpdate(Block *block, bool includeChildren)
 {
-    BlockMarkChildrenNeedsUpdate(block);
+    block->y = INT32_MAX;
+
+    if (includeChildren)
+    {
+        BlockMarkChildrenNeedsUpdate(block);
+    }
 
     Block *parent = block->parent;
 
@@ -497,25 +501,31 @@ bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind)
 }
 
 // Frees the old child if it exists, expands this block's children array as necessary.
-void BlockReplaceChild(Block *block, Block *child, int32_t childI)
+// If there was already a child at this location, either delete it or return it,
+// depending on doDelete.
+Block *BlockReplaceChild(Block *block, Block *child, int32_t childI, bool doDelete)
 {
     assert(block->kindId != BlockKindIdIdentifier);
 
     BlockParentData *parentData = &block->data.parent;
+    Block *oldChild = parentData->children.data[childI];
 
     if (childI >= parentData->children.count)
     {
         childI = parentData->children.count;
         ListPush_BlockPointer(&parentData->children, (BlockPointer){0});
     }
-    else
+    else if (doDelete)
     {
-        BlockDelete(parentData->children.data[childI]);
+        BlockDelete(oldChild);
+        oldChild = NULL;
     }
 
     parentData->children.data[childI] = child;
     child->parent = block;
     child->childI = childI;
+
+    return oldChild;
 }
 
 void BlockInsertChild(Block *block, Block *child, int32_t childI)
@@ -532,6 +542,49 @@ void BlockInsertChild(Block *block, Block *child, int32_t childI)
     child->parent = block;
     child->childI = childI;
     ListInsert_BlockPointer(&parentData->children, child, childI);
+}
+
+// Returns a BlockDeleteResult, which will contain the previous child if doDelete is false.
+// wasRemoved is true if the child was fully removed, or false if it was replaced by a default.
+BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete)
+{
+    BlockKind *kind = &BlockKinds[block->kindId];
+    BlockParentData *parentData = &block->data.parent;
+    Block *oldChild = parentData->children.data[childI];
+
+    if (kind->isGrowable && childI >= kind->defaultChildrenCount)
+    {
+        // This isn't a default child, so it doesn't need to be preserved. Fully delete it.
+        if (doDelete)
+        {
+            BlockDelete(oldChild);
+            oldChild = NULL;
+        }
+
+        ListRemove_BlockPointer(&parentData->children, childI);
+
+        for (int32_t i = childI; i < parentData->children.count; i++)
+        {
+            parentData->children.data[i]->childI -= 1;
+        }
+
+        return (BlockDeleteResult){
+            .oldChild = oldChild,
+            .wasRemoved = true,
+        };
+    }
+
+    // This is a default child, so it needs to be preserved. Replace it with
+    // it's default value instead of deleting it.
+    DefaultChildKind *defaultKind = BlockGetDefaultChild(block, childI);
+
+    Block *defaultBlock = BlockNew(defaultKind->blockKindId, block, childI);
+    BlockReplaceChild(block, defaultBlock, childI, doDelete);
+
+    return (BlockDeleteResult){
+        .oldChild = oldChild,
+        .wasRemoved = false,
+    };
 }
 
 uint64_t BlockCountAll(Block *block)

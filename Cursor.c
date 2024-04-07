@@ -1,6 +1,6 @@
 #include "Cursor.h"
-#include "Shapes.h"
 #include "Math.h"
+#include "Shapes.h"
 
 #include <GLFW/glfw3.h>
 
@@ -13,17 +13,176 @@ Cursor CursorNew(Block *block)
         .searchBar = SearchBarNew(),
         .state = CursorStateMove,
         .isFirstDraw = true,
+        .commands = ListNew_Command(16),
     };
+}
+
+static void CommandDelete(Command *command)
+{
+    switch (command->kind)
+    {
+    case CommandKindReplace: {
+        BlockDelete(command->data.replace.oldChild);
+
+        break;
+    }
+    case CommandKindDelete: {
+        BlockDelete(command->data.delete.oldChild);
+
+        break;
+    }
+    }
 }
 
 void CursorDelete(Cursor *cursor)
 {
+    for (int32_t i = 0; i < cursor->commands.count; i++)
+    {
+        CommandDelete(&cursor->commands.data[i]);
+    }
+
+    ListDelete_Command(&cursor->commands);
+
     SearchBarDelete(&cursor->searchBar);
 
     if (cursor->clipboardBlock)
     {
         BlockDelete(cursor->clipboardBlock);
     }
+}
+
+static void CommandInsertChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
+{
+    BlockInsertChild(parent, child, childI);
+
+    Command command = (Command){
+        .kind = CommandKindInsert,
+        .data.insert =
+            (CommandInsertData){
+                .parent = parent,
+                .childI = childI,
+            },
+    };
+
+    ListPush_Command(&cursor->commands, command);
+}
+
+static void CommandReplaceChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
+{
+    Block *oldChild = BlockReplaceChild(parent, child, childI, false);
+
+    Command command = (Command){
+        .kind = CommandKindReplace,
+        .data.replace =
+            (CommandReplaceData){
+                .parent = parent,
+                .oldChild = oldChild,
+                .childI = childI,
+            },
+    };
+
+    ListPush_Command(&cursor->commands, command);
+}
+
+static BlockDeleteResult CommandDeleteChild(Cursor *cursor, Block *parent, int32_t childI)
+{
+    BlockDeleteResult deleteResult = BlockDeleteChild(parent, childI, false);
+
+    Command command = (Command){
+        .kind = CommandKindDelete,
+        .data.delete =
+            (CommandDeleteData){
+                .parent = parent,
+                .oldChild = deleteResult.oldChild,
+                .childI = childI,
+                .wasRemoved = deleteResult.wasRemoved,
+            },
+    };
+
+    ListPush_Command(&cursor->commands, command);
+
+    return deleteResult;
+}
+
+static void CommandUndo(Cursor *cursor, Command *command)
+{
+    switch (command->kind)
+    {
+    case CommandKindInsert: {
+        // TODO: Instead of doing this have a proper system for jumping the cursor to wherever the undo happened.
+        // eg. go to the block before, after, or worst case, go to the parent.
+        if (cursor->block->parent == command->data.insert.parent &&
+            cursor->block->childI == command->data.insert.childI)
+        {
+            CursorDeleteHere(cursor);
+        }
+        else
+        {
+            BlockDeleteChild(command->data.insert.parent, command->data.insert.childI, true);
+            BlockMarkNeedsUpdate(command->data.insert.parent, false);
+        }
+
+        break;
+    }
+    case CommandKindReplace: {
+        if (!command->data.replace.oldChild)
+        {
+            break;
+        }
+
+        // TODO: Instead of doing this have a proper system for jumping the cursor to wherever the undo happened.
+        // eg. go to the block before, after, or worst case, go to the parent.
+        bool isReplacingCursor =
+            cursor->block == command->data.replace.parent->data.parent.children.data[command->data.replace.childI];
+
+        if (isReplacingCursor)
+        {
+            cursor->block = command->data.replace.oldChild;
+        }
+
+        BlockReplaceChild(
+            command->data.replace.parent, command->data.replace.oldChild, command->data.replace.childI, true);
+        BlockMarkNeedsUpdate(command->data.replace.oldChild, true);
+
+        break;
+    }
+    case CommandKindDelete: {
+        // TODO: Instead of doing this have a proper system for jumping the cursor to wherever the undo happened.
+        // eg. go to the block before, after, or worst case, go to the parent.
+        bool isReplacingCursor =
+            cursor->block == command->data.delete.parent->data.parent.children.data[command->data.delete.childI];
+
+        if (isReplacingCursor)
+        {
+            cursor->block = command->data.delete.oldChild;
+        }
+
+        if (command->data.delete.wasRemoved)
+        {
+            BlockInsertChild(command->data.delete.parent, command->data.delete.oldChild, command->data.delete.childI);
+        }
+        else
+        {
+            BlockReplaceChild(command->data.delete.parent, command->data.delete.oldChild, command->data.delete.childI, true);
+        }
+
+        BlockMarkNeedsUpdate(command->data.delete.oldChild, true);
+
+        break;
+    }
+    }
+}
+
+static void CursorUndo(Cursor *cursor)
+{
+    if (cursor->commands.count < 1)
+    {
+        return;
+    }
+
+    Command command = ListPop_Command(&cursor->commands);
+
+    CommandUndo(cursor, &command);
 }
 
 static bool CursorIsVertical(Cursor *cursor)
@@ -121,15 +280,15 @@ static bool CursorGetChildInsertIndexInDirection(Cursor *cursor, int32_t *childI
 
 static void CursorAddChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
 {
-    BlockMarkNeedsUpdate(cursor->block);
+    BlockMarkNeedsUpdate(cursor->block, true);
 
     if (cursor->insertDirection == InsertDirectionCenter)
     {
-        BlockReplaceChild(parent, child, childI);
+        CommandReplaceChild(cursor, parent, child, childI);
     }
     else
     {
-        BlockInsertChild(parent, child, childI);
+        CommandInsertChild(cursor, parent, child, childI);
     }
 
     cursor->block = child;
@@ -200,8 +359,8 @@ static void CursorShift(Cursor *cursor, InsertDirection shiftDirection)
         return;
     }
 
-    BlockMarkNeedsUpdate(cursor->block);
-    BlockMarkNeedsUpdate(parentParentData->children.data[childI]);
+    BlockMarkNeedsUpdate(cursor->block, true);
+    BlockMarkNeedsUpdate(parentParentData->children.data[childI], true);
 
     parentParentData->children.data[cursor->block->childI] = parentParentData->children.data[childI];
     parentParentData->children.data[childI]->childI = cursor->block->childI;
@@ -246,12 +405,11 @@ static void CursorPaste(Cursor *cursor)
 
     Block *pastedBlock = BlockCopy(cursor->clipboardBlock, cursor->block->parent, cursor->block->childI);
 
-    BlockMarkNeedsUpdate(cursor->block);
+    BlockMarkNeedsUpdate(cursor->block, true);
 
-    BlockReplaceChild(cursor->block->parent, pastedBlock, cursor->block->childI);
+    CommandReplaceChild(cursor, cursor->block->parent, pastedBlock, cursor->block->childI);
 
     cursor->block = pastedBlock;
-
 }
 
 static void CursorUpdateMove(Cursor *cursor, Input *input)
@@ -347,6 +505,11 @@ static void CursorUpdateMove(Cursor *cursor, Input *input)
     {
         CursorPaste(cursor);
     }
+
+    if (InputIsButtonPressed(input, GLFW_KEY_Z))
+    {
+        CursorUndo(cursor);
+    }
 }
 
 static bool ListMatchesString(List_char *list, char *string)
@@ -424,7 +587,8 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 
         if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
         {
-            Block *block = BlockNewIdentifier(cursor->searchBar.text.data, cursor->searchBar.text.count, font, parent, childI);
+            Block *block =
+                BlockNewIdentifier(cursor->searchBar.text.data, cursor->searchBar.text.count, font, parent, childI);
             CursorAddChild(cursor, parent, block, childI);
             CursorEndInsert(cursor);
 
@@ -496,14 +660,14 @@ void CursorDraw(Cursor *cursor, Camera *camera, Font *font, Theme *theme, float 
 
     switch (cursor->state)
     {
-        case CursorStateMove: {
-            CursorDrawMove(cursor, camera, theme);
-            break;
-        }
-        case CursorStateInsert: {
-            SearchBarDraw(&cursor->searchBar, camera, font, theme);
-            break;
-        }
+    case CursorStateMove: {
+        CursorDrawMove(cursor, camera, theme);
+        break;
+    }
+    case CursorStateInsert: {
+        SearchBarDraw(&cursor->searchBar, camera, font, theme);
+        break;
+    }
     }
 }
 
@@ -588,57 +752,38 @@ void CursorRight(Cursor *cursor)
     CursorMoveHorizontalOrVertical(cursor, CursorNext, CursorDescend);
 }
 
-// TODO: Most of this logic should be part of the block, it should know how to delete one of it's children.
 void CursorDeleteHere(Cursor *cursor)
 {
-    if (!cursor->block->parent)
+    Block *parent = cursor->block->parent;
+    int32_t childI = cursor->block->childI;
+
+    if (!parent)
     {
         return;
     }
 
-    BlockKind *parentKind = &BlockKinds[cursor->block->parent->kindId];
-    BlockParentData *parentParentData = &cursor->block->parent->data.parent;
+    BlockDeleteResult deleteResult = CommandDeleteChild(cursor, parent, childI);
+    BlockMarkNeedsUpdate(parent, false);
 
-    BlockMarkNeedsUpdate(cursor->block);
+    BlockParentData *parentParentData = &parent->data.parent;
 
-    if (parentKind->isGrowable && cursor->block->childI >= parentKind->defaultChildrenCount)
+    if (deleteResult.wasRemoved)
     {
-        // This isn't a default child, so it doesn't need to be preserved. Fully delete it.
-        int32_t deleteI = cursor->block->childI;
-
-        if (cursor->block->childI < parentParentData->children.count - 1)
+        if (childI < parentParentData->children.count)
         {
-            cursor->block = parentParentData->children.data[cursor->block->childI + 1];
+            cursor->block = parentParentData->children.data[childI];
         }
-        else if (cursor->block->childI > 0)
+        else if (childI > 0)
         {
-            cursor->block = parentParentData->children.data[cursor->block->childI - 1];
+            cursor->block = parentParentData->children.data[childI - 1];
         }
         else
         {
-            cursor->block = cursor->block->parent;
-        }
-
-        BlockDelete(parentParentData->children.data[deleteI]);
-        ListRemove_BlockPointer(&parentParentData->children, deleteI);
-
-        for (int32_t i = deleteI; i < parentParentData->children.count; i++)
-        {
-            parentParentData->children.data[i]->childI -= 1;
+            cursor->block = parent;
         }
     }
     else
     {
-        // This is a default child, so it needs to be preserved. Replace it with it's default value instead of deleting
-        // it.
-        DefaultChildKind *defaultKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
-
-        Block *parent = cursor->block->parent;
-        int32_t childI = cursor->block->childI;
-
-        Block *defaultBlock = BlockNew(defaultKind->blockKindId, parent, childI);
-        BlockReplaceChild(parent, defaultBlock, childI);
-
-        cursor->block = defaultBlock;
+        cursor->block = parentParentData->children.data[childI];
     }
 }
