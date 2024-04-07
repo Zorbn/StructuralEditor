@@ -53,6 +53,8 @@ void CursorDelete(Cursor *cursor)
 
 static void CommandInsertChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
 {
+    Block *cursorBlock = cursor->block;
+
     BlockInsertChild(parent, child, childI);
 
     Command command = (Command){
@@ -62,6 +64,7 @@ static void CommandInsertChild(Cursor *cursor, Block *parent, Block *child, int3
                 .parent = parent,
                 .childI = childI,
             },
+        .cursorBlock = cursorBlock,
     };
 
     ListPush_Command(&cursor->commands, command);
@@ -69,6 +72,7 @@ static void CommandInsertChild(Cursor *cursor, Block *parent, Block *child, int3
 
 static void CommandReplaceChild(Cursor *cursor, Block *parent, Block *child, int32_t childI)
 {
+    Block *cursorBlock = cursor->block;
     Block *oldChild = BlockReplaceChild(parent, child, childI, false);
 
     Command command = (Command){
@@ -79,6 +83,7 @@ static void CommandReplaceChild(Cursor *cursor, Block *parent, Block *child, int
                 .oldChild = oldChild,
                 .childI = childI,
             },
+        .cursorBlock = cursorBlock,
     };
 
     ListPush_Command(&cursor->commands, command);
@@ -86,6 +91,7 @@ static void CommandReplaceChild(Cursor *cursor, Block *parent, Block *child, int
 
 static BlockDeleteResult CommandDeleteChild(Cursor *cursor, Block *parent, int32_t childI)
 {
+    Block *cursorBlock = cursor->block;
     BlockDeleteResult deleteResult = BlockDeleteChild(parent, childI, false);
 
     Command command = (Command){
@@ -97,6 +103,7 @@ static BlockDeleteResult CommandDeleteChild(Cursor *cursor, Block *parent, int32
                 .childI = childI,
                 .wasRemoved = deleteResult.wasRemoved,
             },
+        .cursorBlock = cursorBlock,
     };
 
     ListPush_Command(&cursor->commands, command);
@@ -106,6 +113,7 @@ static BlockDeleteResult CommandDeleteChild(Cursor *cursor, Block *parent, int32
 
 static void CommandSwapChildren(Cursor *cursor, Block *parent, int32_t firstChildI, int32_t secondChildI)
 {
+    Block *cursorBlock = cursor->block;
     BlockSwapChildren(parent, firstChildI, secondChildI);
 
     Command command = (Command){
@@ -116,6 +124,7 @@ static void CommandSwapChildren(Cursor *cursor, Block *parent, int32_t firstChil
                 .firstChildI = firstChildI,
                 .secondChildI = secondChildI,
             },
+        .cursorBlock = cursorBlock,
     };
 
     ListPush_Command(&cursor->commands, command);
@@ -126,18 +135,8 @@ static void CommandUndo(Cursor *cursor, Command *command)
     switch (command->kind)
     {
     case CommandKindInsert: {
-        // TODO: Instead of doing this have a proper system for jumping the cursor to wherever the undo happened.
-        // eg. go to the block before, after, or worst case, go to the parent.
-        if (cursor->block->parent == command->data.insert.parent &&
-            cursor->block->childI == command->data.insert.childI)
-        {
-            CursorDeleteHere(cursor);
-        }
-        else
-        {
-            BlockDeleteChild(command->data.insert.parent, command->data.insert.childI, true);
-            BlockMarkNeedsUpdate(command->data.insert.parent);
-        }
+        BlockDeleteChild(command->data.insert.parent, command->data.insert.childI, true);
+        BlockMarkNeedsUpdate(command->data.insert.parent);
 
         break;
     }
@@ -147,16 +146,6 @@ static void CommandUndo(Cursor *cursor, Command *command)
             break;
         }
 
-        // TODO: Instead of doing this have a proper system for jumping the cursor to wherever the undo happened.
-        // eg. go to the block before, after, or worst case, go to the parent.
-        bool isReplacingCursor =
-            cursor->block == command->data.replace.parent->data.parent.children.data[command->data.replace.childI];
-
-        if (isReplacingCursor)
-        {
-            cursor->block = command->data.replace.oldChild;
-        }
-
         BlockReplaceChild(
             command->data.replace.parent, command->data.replace.oldChild, command->data.replace.childI, true);
         BlockMarkNeedsUpdate(command->data.replace.oldChild);
@@ -164,16 +153,6 @@ static void CommandUndo(Cursor *cursor, Command *command)
         break;
     }
     case CommandKindDelete: {
-        // TODO: Instead of doing this have a proper system for jumping the cursor to wherever the undo happened.
-        // eg. go to the block before, after, or worst case, go to the parent.
-        bool isReplacingCursor =
-            cursor->block == command->data.delete.parent->data.parent.children.data[command->data.delete.childI];
-
-        if (isReplacingCursor)
-        {
-            cursor->block = command->data.delete.oldChild;
-        }
-
         if (command->data.delete.wasRemoved)
         {
             BlockInsertChild(command->data.delete.parent, command->data.delete.oldChild, command->data.delete.childI);
@@ -198,6 +177,8 @@ static void CommandUndo(Cursor *cursor, Command *command)
         break;
     }
     }
+
+    cursor->block = command->cursorBlock;
 }
 
 static void CursorUndo(Cursor *cursor)
@@ -377,8 +358,10 @@ static void CursorShift(Cursor *cursor, InsertDirection shiftDirection)
         return;
     }
 
+    Block *otherBlock = BlockGetChild(cursor->block->parent, childI);
+
     BlockMarkNeedsUpdate(cursor->block);
-    BlockMarkNeedsUpdate(cursor->block->parent->data.parent.children.data[childI]);
+    BlockMarkNeedsUpdate(otherBlock);
 
     CommandSwapChildren(cursor, cursor->block->parent, cursor->block->childI, childI);
 }
@@ -520,7 +503,7 @@ static void CursorUpdateMove(Cursor *cursor, Input *input)
         CursorPaste(cursor);
     }
 
-    if (InputIsButtonPressed(input, GLFW_KEY_Z))
+    if (InputIsButtonPressedOrRepeat(input, GLFW_KEY_Z))
     {
         CursorUndo(cursor);
     }
@@ -702,7 +685,7 @@ void CursorDescend(Cursor *cursor)
         return;
     }
 
-    cursor->block = cursor->block->data.parent.children.data[0];
+    cursor->block = BlockGetChild(cursor->block, 0);
 }
 
 static void CursorMove(Cursor *cursor, int32_t delta)
@@ -721,7 +704,7 @@ static void CursorMove(Cursor *cursor, int32_t delta)
 
     int32_t nextI = MathInt32Wrap(cursor->block->childI + delta, parentChildrenCount);
 
-    cursor->block = cursor->block->parent->data.parent.children.data[nextI];
+    cursor->block = BlockGetChild(cursor->block->parent, nextI);
 }
 
 void CursorNext(Cursor *cursor)

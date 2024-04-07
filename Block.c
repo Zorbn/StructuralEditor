@@ -378,7 +378,9 @@ void BlockDelete(Block *block)
     {
         for (int32_t i = 0; i < block->data.parent.children.count; i++)
         {
-            BlockDelete(block->data.parent.children.data[i]);
+            Block *child = BlockGetChild(block, i);
+
+            BlockDelete(child);
         }
 
         ListDelete_BlockPointer(&block->data.parent.children);
@@ -406,7 +408,7 @@ bool BlockContainsNonPin(Block *block)
 
     for (int32_t i = 0; i < childrenCount; i++)
     {
-        Block *child = block->data.parent.children.data[i];
+        Block *child = BlockGetChild(block, i);
 
         if (child->kindId != BlockKindIdPin)
         {
@@ -456,6 +458,11 @@ DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI)
     childI = MathInt32Min(childI, kind->defaultChildrenCount - 1);
 
     return &kind->defaultChildren[childI];
+}
+
+Block *BlockGetChild(Block *block, int32_t childI)
+{
+    return block->data.parent.children.data[childI];
 }
 
 void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y)
@@ -601,7 +608,9 @@ uint64_t BlockCountAll(Block *block)
 
     for (int32_t i = 0; i < BlockGetChildrenCount(block); i++)
     {
-        count += BlockCountAll(block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        count += BlockCountAll(child);
     }
 
     return count;
@@ -652,7 +661,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
     {
         for (int32_t i = 0; i < childrenCount; i++)
         {
-            Block *child = block->data.parent.children.data[i];
+            Block *child = BlockGetChild(block, i);
 
             BlockUpdateTree(child, localX, localY);
 
@@ -669,7 +678,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 
         for (int32_t i = 0; i < childrenCount; i++)
         {
-            Block *child = block->data.parent.children.data[i];
+            Block *child = BlockGetChild(block, i);
 
             BlockUpdateTree(child, localX, localY);
 
@@ -715,7 +724,7 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
     while (minI != maxI)
     {
         int32_t i = (minI + maxI) / 2;
-        Block *child = block->data.parent.children.data[i];
+        Block *child = BlockGetChild(block, i);
 
         if (y + child->y + child->height < camera->y)
         {
@@ -778,7 +787,7 @@ void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, 
 
     for (int32_t i = firstVisibleI; i < childrenCount; i++)
     {
-        Block *child = block->data.parent.children.data[i];
+        Block *child = BlockGetChild(block, i);
 
         if (y + child->y > camera->y + camera->height / camera->zoom)
         {

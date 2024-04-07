@@ -62,6 +62,7 @@ typedef struct Command
 {
     CommandData data;
     CommandKind kind;
+    Block *cursorBlock;
 } Command;
 
 ListDefine(Command);

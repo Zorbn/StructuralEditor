@@ -31,7 +31,9 @@ static void SaverSaveBlockList(Saver *saver, Block *block, int32_t firstI, char 
 
     for (int32_t i = firstI; i < childrenCount; i++)
     {
-        SaverSave(saver, block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
 
         if (i < childrenCount - 1)
         {
@@ -54,7 +56,9 @@ void SaverSaveDo(Saver *saver, Block *block)
 
     for (int32_t i = 0; i < childrenCount; i++)
     {
-        SaverSave(saver, block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
     }
 
     WriterUnindent(&saver->writer);
@@ -67,14 +71,16 @@ void SaverSaveStatementList(Saver *saver, Block *block)
 
     for (int32_t i = 0; i < childrenCount; i++)
     {
-        SaverSave(saver, block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
     }
 }
 
 void SaverSaveFunctionHeader(Saver *saver, Block *block)
 {
     WriterWrite(&saver->writer, "function ");
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
     WriterWrite(&saver->writer, "(");
     SaverSaveBlockList(saver, block, 1, ", ");
     WriterWriteLine(&saver->writer, ")");
@@ -82,9 +88,9 @@ void SaverSaveFunctionHeader(Saver *saver, Block *block)
 
 void SaverSaveFunction(Saver *saver, Block *block)
 {
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
     WriterIndent(&saver->writer);
-    SaverSave(saver, block->data.parent.children.data[1]);
+    SaverSave(saver, BlockGetChild(block, 1));
     WriterUnindent(&saver->writer);
     WriterWriteLine(&saver->writer, "end");
 }
@@ -99,16 +105,16 @@ void SaverSaveLambdaFunctionHeader(Saver *saver, Block *block)
 
 void SaverSaveLambdaFunction(Saver *saver, Block *block)
 {
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
     WriterIndent(&saver->writer);
-    SaverSave(saver, block->data.parent.children.data[1]);
+    SaverSave(saver, BlockGetChild(block, 1));
     WriterUnindent(&saver->writer);
     WriterWriteLine(&saver->writer, "end");
 }
 
 void SaverSaveCase(Saver *saver, Block *block)
 {
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
     WriterWriteLine(&saver->writer, " then");
 
     WriterIndent(&saver->writer);
@@ -117,7 +123,9 @@ void SaverSaveCase(Saver *saver, Block *block)
 
     for (int32_t i = 1; i < childrenCount; i++)
     {
-        SaverSave(saver, block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
     }
 
     WriterUnindent(&saver->writer);
@@ -138,7 +146,9 @@ void SaverSaveIfCases(Saver *saver, Block *block)
             WriterWrite(&saver->writer, "elseif ");
         }
 
-        SaverSave(saver, block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
     }
 }
 
@@ -151,7 +161,9 @@ void SaverSaveElseCase(Saver *saver, Block *block)
 
     for (int32_t i = 0; i < childrenCount; i++)
     {
-        SaverSave(saver, block->data.parent.children.data[i]);
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
     }
 
     WriterUnindent(&saver->writer);
@@ -159,9 +171,9 @@ void SaverSaveElseCase(Saver *saver, Block *block)
 
 void SaverSaveIf(Saver *saver, Block *block)
 {
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
 
-    Block *elseBlock = block->data.parent.children.data[1];
+    Block *elseBlock = BlockGetChild(block, 1);
 
     if (BlockContainsNonPin(elseBlock))
     {
@@ -173,9 +185,9 @@ void SaverSaveIf(Saver *saver, Block *block)
 
 void SaverSaveAssignment(Saver *saver, Block *block)
 {
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
     WriterWrite(&saver->writer, " = ");
-    SaverSave(saver, block->data.parent.children.data[1]);
+    SaverSave(saver, BlockGetChild(block, 1));
     WriterNewline(&saver->writer);
 }
 
@@ -186,7 +198,7 @@ void SaverSaveAdd(Saver *saver, Block *block)
 
 void SaverSaveCall(Saver *saver, Block *block)
 {
-    SaverSave(saver, block->data.parent.children.data[0]);
+    SaverSave(saver, BlockGetChild(block, 0));
 
     WriterWrite(&saver->writer, "(");
 

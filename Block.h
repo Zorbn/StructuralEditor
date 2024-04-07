@@ -128,6 +128,7 @@ int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
 DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI);
+Block *BlockGetChild(Block *block, int32_t childI);
 void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y);
 bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind);
 Block *BlockReplaceChild(Block *block, Block *child, int32_t childI, bool doDelete);
