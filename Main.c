@@ -37,12 +37,13 @@
  * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
  * Special editing modes for specific features, eg. (in Lua) comments, patterns, LuaLS annotations, etc.
  * Save/load pins to/from something, rather than skipping them, eg. PIN or --[[ PIN ]] or --[[ TODO ]].
+ * Maybe comments can be attached to nodes in the tree, rather than being nodes themselves?
  *
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
  * Local,
  * Operators (https://www.tutorialspoint.com/lua/lua_operators.htm),
- * Parenthesis in expressions,
+ * Parenthesis in expressions (not needed as an explicit block, as long as parsing has correct precedence and saving uses parens where necessary),
  * Tables ({[key] = value, ..}, {key = value, ..}, and {value, ..}),
  * Return,
  * Multi-return and multi-assignment,
