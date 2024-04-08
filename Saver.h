@@ -29,3 +29,7 @@ void SaverSaveAssignment(Saver *saver, Block *block);
 void SaverSaveAdd(Saver *saver, Block *block);
 void SaverSaveCall(Saver *saver, Block *block);
 void SaverSaveIdentifier(Saver *saver, Block *block);
+void SaverSaveForLoop(Saver *saver, Block *block);
+void SaverSaveForLoopCondition(Saver *saver, Block *block);
+void SaverSaveForLoopBounds(Saver *saver, Block *block);
+void SaverSaveForInLoopCondition(Saver *saver, Block *block);

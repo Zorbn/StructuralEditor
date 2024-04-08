@@ -66,8 +66,10 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
             BlockKindIdFunction,
             BlockKindIdIf,
             BlockKindIdCall,
+            BlockKindIdForLoop,
+            BlockKindIdForInLoop,
         },
-        .blockKindIdCount = 5,
+        .blockKindIdCount = 7,
     },
     [PinKindIdentifier] = {
         .blockKindIds = (BlockKindId[]){
@@ -254,6 +256,67 @@ void BlockKindsInit(void)
         .pinKind = PinKindIdentifier,
         .defaultChildrenCount = 0,
         .save = SaverSaveIdentifier,
+    });
+    BlockKinds[BlockKindIdForLoop] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "for",
+        .text = "for",
+        .isVertical = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdForLoopCondition),
+                NewChild(BlockKindIdStatementList),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveForLoop,
+    });
+    BlockKinds[BlockKindIdForLoopCondition] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .text = "=",
+        .isTextInfix = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindIdentifier),
+                NewChild(BlockKindIdForLoopBounds),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveForLoopCondition,
+    });
+    BlockKinds[BlockKindIdForLoopBounds] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 3,
+        .save = SaverSaveForLoopBounds,
+    });
+    BlockKinds[BlockKindIdForInLoop] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "for in",
+        .text = "for",
+        .isVertical = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdForInLoopCondition),
+                NewChild(BlockKindIdStatementList),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveForLoop,
+    });
+    BlockKinds[BlockKindIdForInLoopCondition] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .text = "in",
+        .isTextInfix = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindIdentifier),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveForInLoopCondition,
     });
 }
 
@@ -651,7 +714,12 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 
     if (!kind->isTextInfix)
     {
-        localX += textWidth + BlockPadding;
+        localX += textWidth;
+
+        if (textWidth != 0)
+        {
+            localX += BlockPadding;
+        }
     }
 
     int32_t startX = localX;

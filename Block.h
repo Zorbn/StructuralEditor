@@ -34,6 +34,11 @@ typedef enum BlockKindId
     BlockKindIdAdd,
     BlockKindIdCall,
     BlockKindIdIdentifier,
+    BlockKindIdForLoop,
+    BlockKindIdForLoopCondition,
+    BlockKindIdForLoopBounds,
+    BlockKindIdForInLoop,
+    BlockKindIdForInLoopCondition,
 
     BlockKindIdCount,
 } BlockKindId;

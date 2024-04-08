@@ -36,13 +36,14 @@
  * Find node corresponding to position in file,
  * Support more symbols in identifiers, such as ?, so "enabled?" generates "is_enabled" or something,
  * Special editing modes for specific features, eg. (in Lua) comments, patterns, LuaLS annotations, etc.
+ * Save/load pins to/from something, rather than skipping them, eg. PIN or --[[ PIN ]] or --[[ TODO ]].
  *
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
  * Local,
- * Operators,
+ * Operators (https://www.tutorialspoint.com/lua/lua_operators.htm),
  * Parenthesis in expressions,
- * For loops and while loops,
+ * While loops,
  * Tables ({[key] = value, ..}, {key = value, ..}, and {value, ..}),
  * Return,
  * Multi-return and multi-assignment,

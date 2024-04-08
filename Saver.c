@@ -59,10 +59,11 @@ void SaverSaveDo(Saver *saver, Block *block)
         Block *child = BlockGetChild(block, i);
 
         SaverSave(saver, child);
+        WriterNewline(&saver->writer);
     }
 
     WriterUnindent(&saver->writer);
-    WriterWriteLine(&saver->writer, "end");
+    WriterWrite(&saver->writer, "end");
 }
 
 void SaverSaveStatementList(Saver *saver, Block *block)
@@ -74,6 +75,7 @@ void SaverSaveStatementList(Saver *saver, Block *block)
         Block *child = BlockGetChild(block, i);
 
         SaverSave(saver, child);
+        WriterNewline(&saver->writer);
     }
 }
 
@@ -92,7 +94,7 @@ void SaverSaveFunction(Saver *saver, Block *block)
     WriterIndent(&saver->writer);
     SaverSave(saver, BlockGetChild(block, 1));
     WriterUnindent(&saver->writer);
-    WriterWriteLine(&saver->writer, "end");
+    WriterWrite(&saver->writer, "end");
 }
 
 void SaverSaveLambdaFunctionHeader(Saver *saver, Block *block)
@@ -126,6 +128,7 @@ void SaverSaveCase(Saver *saver, Block *block)
         Block *child = BlockGetChild(block, i);
 
         SaverSave(saver, child);
+        WriterNewline(&saver->writer);
     }
 
     WriterUnindent(&saver->writer);
@@ -164,6 +167,7 @@ void SaverSaveElseCase(Saver *saver, Block *block)
         Block *child = BlockGetChild(block, i);
 
         SaverSave(saver, child);
+        WriterNewline(&saver->writer);
     }
 
     WriterUnindent(&saver->writer);
@@ -180,7 +184,7 @@ void SaverSaveIf(Saver *saver, Block *block)
         SaverSave(saver, elseBlock);
     }
 
-    WriterWriteLine(&saver->writer, "end");
+    WriterWrite(&saver->writer, "end");
 }
 
 void SaverSaveAssignment(Saver *saver, Block *block)
@@ -188,7 +192,6 @@ void SaverSaveAssignment(Saver *saver, Block *block)
     SaverSave(saver, BlockGetChild(block, 0));
     WriterWrite(&saver->writer, " = ");
     SaverSave(saver, BlockGetChild(block, 1));
-    WriterNewline(&saver->writer);
 }
 
 void SaverSaveAdd(Saver *saver, Block *block)
@@ -204,10 +207,52 @@ void SaverSaveCall(Saver *saver, Block *block)
 
     SaverSaveBlockList(saver, block, 1, ", ");
 
-    WriterWriteLine(&saver->writer, ")");
+    WriterWrite(&saver->writer, ")");
 }
 
 void SaverSaveIdentifier(Saver *saver, Block *block)
 {
     WriterWriteIdentifier(&saver->writer, block->data.identifier.text);
+}
+
+void SaverSaveForLoop(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "for ");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWriteLine(&saver->writer, " do");
+
+    WriterIndent(&saver->writer);
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterUnindent(&saver->writer);
+
+    WriterWrite(&saver->writer, "end");
+}
+
+void SaverSaveForLoopCondition(Saver *saver, Block *block)
+{
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, " = ");
+    SaverSave(saver, BlockGetChild(block, 1));
+}
+
+void SaverSaveForLoopBounds(Saver *saver, Block *block)
+{
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, ", ");
+    SaverSave(saver, BlockGetChild(block, 1));
+
+    Block *stepBlock = BlockGetChild(block, 2);
+
+    if (stepBlock->kindId != BlockKindIdPin)
+    {
+        WriterWrite(&saver->writer, ", ");
+        SaverSave(saver, BlockGetChild(block, 2));
+    }
+}
+
+void SaverSaveForInLoopCondition(Saver *saver, Block *block)
+{
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, " in ");
+    SaverSave(saver, BlockGetChild(block, 1));
 }
