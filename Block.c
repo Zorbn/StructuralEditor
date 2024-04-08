@@ -68,8 +68,9 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
             BlockKindIdCall,
             BlockKindIdForLoop,
             BlockKindIdForInLoop,
+            BlockKindIdWhileLoop,
         },
-        .blockKindIdCount = 7,
+        .blockKindIdCount = 8,
     },
     [PinKindIdentifier] = {
         .blockKindIds = (BlockKindId[]){
@@ -317,6 +318,19 @@ void BlockKindsInit(void)
             },
         .defaultChildrenCount = 2,
         .save = SaverSaveForInLoopCondition,
+    });
+    BlockKinds[BlockKindIdWhileLoop] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "while",
+        .text = "while",
+        .isVertical = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChild(BlockKindIdStatementList),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveWhileLoop,
     });
 }
 

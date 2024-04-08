@@ -256,3 +256,16 @@ void SaverSaveForInLoopCondition(Saver *saver, Block *block)
     WriterWrite(&saver->writer, " in ");
     SaverSave(saver, BlockGetChild(block, 1));
 }
+
+void SaverSaveWhileLoop(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "while ");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWriteLine(&saver->writer, " do");
+
+    WriterIndent(&saver->writer);
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterUnindent(&saver->writer);
+
+    WriterWrite(&saver->writer, "end");
+}

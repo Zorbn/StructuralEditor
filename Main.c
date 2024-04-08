@@ -43,7 +43,6 @@
  * Local,
  * Operators (https://www.tutorialspoint.com/lua/lua_operators.htm),
  * Parenthesis in expressions,
- * While loops,
  * Tables ({[key] = value, ..}, {key = value, ..}, and {value, ..}),
  * Return,
  * Multi-return and multi-assignment,

@@ -152,30 +152,6 @@ Block *ParserParseStatementList(Parser *parser, Block *parent, int32_t childI)
     return statementList;
 }
 
-Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI)
-{
-    Block *functionHeader = BlockNew(BlockKindIdFunctionHeader, parent, childI);
-
-    ParserMatch(parser, "function");
-
-    BlockReplaceChild(functionHeader, ParserParseIdentifier(parser, parent, 0), 0, true);
-
-    ParserMatch(parser, "(");
-    ParserList(parser, functionHeader, ParserParseIdentifier, 1, ")", ",");
-
-    return functionHeader;
-}
-
-Block *ParserParseFunction(Parser *parser, Block *parent, int32_t childI)
-{
-    Block *functionBlock = BlockNew(BlockKindIdFunction, parent, childI);
-
-    BlockReplaceChild(functionBlock, ParserParseFunctionHeader(parser, functionBlock, 0), 0, true);
-    BlockReplaceChild(functionBlock, ParserParseStatementList(parser, functionBlock, 1), 1, true);
-
-    return functionBlock;
-}
-
 Block *ParserParseForLoop(Parser *parser, Block *parent, int32_t childI)
 {
     ParserMatch(parser, "for");
@@ -232,6 +208,45 @@ Block *ParserParseForLoop(Parser *parser, Block *parent, int32_t childI)
     BlockReplaceChild(forLoop, statementList, 1, true);
 
     return forLoop;
+}
+
+Block *ParserParseWhileLoop(Parser *parser, Block *parent, int32_t childI)
+{
+    ParserMatch(parser, "while");
+
+    Block *whileLoop = BlockNew(BlockKindIdWhileLoop, parent, childI);
+
+    BlockReplaceChild(whileLoop, ParserParseExpression(parser, whileLoop, 0), 0, true);
+
+    ParserMatch(parser, "do");
+
+    BlockReplaceChild(whileLoop, ParserParseStatementList(parser, whileLoop, 1), 1, true);
+
+    return whileLoop;
+}
+
+Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI)
+{
+    Block *functionHeader = BlockNew(BlockKindIdFunctionHeader, parent, childI);
+
+    ParserMatch(parser, "function");
+
+    BlockReplaceChild(functionHeader, ParserParseIdentifier(parser, parent, 0), 0, true);
+
+    ParserMatch(parser, "(");
+    ParserList(parser, functionHeader, ParserParseIdentifier, 1, ")", ",");
+
+    return functionHeader;
+}
+
+Block *ParserParseFunction(Parser *parser, Block *parent, int32_t childI)
+{
+    Block *functionBlock = BlockNew(BlockKindIdFunction, parent, childI);
+
+    BlockReplaceChild(functionBlock, ParserParseFunctionHeader(parser, functionBlock, 0), 0, true);
+    BlockReplaceChild(functionBlock, ParserParseStatementList(parser, functionBlock, 1), 1, true);
+
+    return functionBlock;
 }
 
 Block *ParserParseLambdaFunctionHeader(Parser *parser, Block *parent, int32_t childI)
@@ -354,6 +369,10 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
     else if (LexerTokenEquals(&parser->lexer, start, "for"))
     {
         return ParserParseForLoop(parser, parent, childI);
+    }
+    else if (LexerTokenEquals(&parser->lexer, start, "while"))
+    {
+        return ParserParseWhileLoop(parser, parent, childI);
     }
 
     Block *expression = ParserParseExpression(parser, parent, childI);
