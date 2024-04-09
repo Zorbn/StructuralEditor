@@ -19,6 +19,7 @@ typedef struct Lexer
 
 Lexer LexerNew(char *data, int32_t dataCount);
 char LexerChar(const Lexer *lexer);
+char LexerPeekChar(const Lexer *lexer);
 Token LexerPeek(const Lexer *lexer);
 Token LexerNext(Lexer *lexer);
 Token LexerRead(Lexer *lexer);

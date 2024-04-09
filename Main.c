@@ -42,8 +42,6 @@
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
  * Local,
- * Operators (https://www.tutorialspoint.com/lua/lua_operators.htm),
- * Parenthesis in expressions (not needed as an explicit block, as long as parsing has correct precedence and saving uses parens where necessary),
  * Tables ({[key] = value, ..}, {key = value, ..}, and {value, ..}),
  * Return,
  * Multi-return and multi-assignment,

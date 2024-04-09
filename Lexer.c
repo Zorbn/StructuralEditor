@@ -1,5 +1,6 @@
 #include "Lexer.h"
 
+#include <string.h>
 #include <ctype.h>
 
 Lexer LexerNew(char *data, int32_t dataCount)
@@ -16,14 +17,24 @@ Lexer LexerNew(char *data, int32_t dataCount)
     return lexer;
 }
 
-char LexerChar(const Lexer *lexer)
+static char LexerGetChar(const Lexer *lexer, int32_t i)
 {
-    if (lexer->position >= lexer->dataCount)
+    if (i >= lexer->dataCount)
     {
         return '\0';
     }
 
-    return lexer->data[lexer->position];
+    return lexer->data[i];
+}
+
+char LexerChar(const Lexer *lexer)
+{
+    return LexerGetChar(lexer, lexer->position);
+}
+
+char LexerPeekChar(const Lexer *lexer)
+{
+    return LexerGetChar(lexer, lexer->position + 1);
 }
 
 Token LexerPeek(const Lexer *lexer)
@@ -112,7 +123,35 @@ Token LexerRead(Lexer *lexer)
         };
     }
 
-    // TODO: Check if this is a two character operator.
+    if (LexerChar(lexer) == '.' && LexerPeekChar(lexer) == '.')
+    {
+        Token token = (Token){
+        .start = lexer->position,
+        .end = lexer->position + 2,
+        };
+        lexer->position += 2;
+
+        return token;
+    }
+
+    if (LexerPeekChar(lexer) == '=')
+    {
+        switch (LexerChar(lexer))
+        {
+            case '<':
+            case '>':
+            case '=':
+            case '~': {
+                Token token = (Token){
+                .start = lexer->position,
+                .end = lexer->position + 2,
+                };
+                lexer->position += 2;
+
+                return token;
+            }
+        }
+    }
 
     Token token = (Token){
         .start = lexer->position,

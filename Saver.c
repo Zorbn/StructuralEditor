@@ -194,9 +194,122 @@ void SaverSaveAssignment(Saver *saver, Block *block)
     SaverSave(saver, BlockGetChild(block, 1));
 }
 
+void SaverSaveNot(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "not ");
+    SaverSave(saver, BlockGetChild(block, 0));
+}
+
+void SaverSaveLength(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "#");
+    SaverSave(saver, BlockGetChild(block, 0));
+}
+
+void SaverSaveConcatenate(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " .. ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveModulo(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " % ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveDivide(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " / ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveMultiply(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " * ");
+    WriterWrite(&saver->writer, ")");
+}
+
 void SaverSaveAdd(Saver *saver, Block *block)
 {
+    WriterWrite(&saver->writer, "(");
     SaverSaveBlockList(saver, block, 0, " + ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveSubtract(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " - ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveGreaterEqual(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, " >= ");
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveLessEqual(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, " <= ");
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveGreater(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, " > ");
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveLess(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, " < ");
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveNotEqual(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " != ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveEqual(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " == ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveAnd(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " and ");
+    WriterWrite(&saver->writer, ")");
+}
+
+void SaverSaveOr(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "(");
+    SaverSaveBlockList(saver, block, 0, " or ");
+    WriterWrite(&saver->writer, ")");
 }
 
 void SaverSaveCall(Saver *saver, Block *block)
