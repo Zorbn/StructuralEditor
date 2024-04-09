@@ -409,10 +409,33 @@ void SaverSaveTableKeyValuePair(Saver *saver, Block *block)
         return;
     }
 
-    // WriterWrite(&saver->writer, "[");
     SaverSave(saver, BlockGetChild(block, 0));
-    // WriterWrite(&saver->writer, "] = ");
     WriterWrite(&saver->writer, " = ");
     SaverSave(saver, BlockGetChild(block, 1));
+    WriterWriteLine(&saver->writer, ",");
+}
+
+void SaverSaveTableExpressionValuePair(Saver *saver, Block *block)
+{
+    if (!BlockContainsNonPin(block))
+    {
+        return;
+    }
+
+    WriterWrite(&saver->writer, "[");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, "] = ");
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterWriteLine(&saver->writer, ",");
+}
+
+void SaverSaveTableValue(Saver *saver, Block *block)
+{
+    if (!BlockContainsNonPin(block))
+    {
+        return;
+    }
+
+    SaverSave(saver, BlockGetChild(block, 0));
     WriterWriteLine(&saver->writer, ",");
 }

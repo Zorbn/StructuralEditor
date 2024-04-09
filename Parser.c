@@ -513,10 +513,37 @@ Block *ParserParseTable(Parser *parser, Block *parent, int32_t childI)
 
 Block *ParserParseTableKeyValuePair(Parser *parser, Block *parent, int32_t childI)
 {
-    Block *pair = BlockNew(BlockKindIdTableKeyValuePair, parent, childI);
+    // Keys can be in three forms {key = value}, {[expression] = value}, {value, value}.
 
-    BlockReplaceChild(pair, ParserParseIdentifier(parser, pair, 0), 0, true);
+    bool isExpressionValuePair = false;
+    BlockKindId pairKindId = BlockKindIdTableKeyValuePair;
+
+    if (ParserHas(parser, "["))
+    {
+        LexerNext(&parser->lexer);
+
+        isExpressionValuePair = true;
+        pairKindId = BlockKindIdTableExpressionValuePair;
+    }
+
+    Block *key = ParserParseExpression(parser, parent, childI);
+
+    if (isExpressionValuePair)
+    {
+        ParserMatch(parser, "]");
+    }
+    else if (!ParserHas(parser, "="))
+    {
+        Block *value = BlockNew(BlockKindIdTableValue, parent, childI);
+        BlockReplaceChild(value, key, 0, true);
+
+        return value;
+    }
+
     ParserMatch(parser, "=");
+
+    Block *pair = BlockNew(pairKindId, parent, childI);
+    BlockReplaceChild(pair, key, 0, true);
     BlockReplaceChild(pair, ParserParseExpression(parser, pair, 1), 1, true);
 
     return pair;

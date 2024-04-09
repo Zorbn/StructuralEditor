@@ -41,8 +41,7 @@
  *
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
- * Local,
- * Tables ({[key] = value, ..} and {value, ..}),
+ * Local (as a block that can contain either an = block or a function block),
  * Return,
  * Multi-return and multi-assignment,
  */

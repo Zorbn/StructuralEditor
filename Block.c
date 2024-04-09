@@ -94,6 +94,14 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
         },
         .blockKindIdCount = 1,
     },
+    [PinKindTableEntry] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdTableKeyValuePair,
+            BlockKindIdTableExpressionValuePair,
+            BlockKindIdTableValue,
+        },
+        .blockKindIdCount = 3,
+    },
     [PinKindNone] = {
         .blockKindIdCount = 0,
     },
@@ -565,13 +573,14 @@ void BlockKindsInit(void)
         .isGrowable = true,
         .defaultChildren =
             (DefaultChildKind[]){
-                NewChild(BlockKindIdTableKeyValuePair),
+                NewChildPin(PinKindTableEntry),
             },
         .defaultChildrenCount = 1,
         .save = SaverSaveTable,
     });
     BlockKinds[BlockKindIdTableKeyValuePair] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
+        .pinKind = PinKindTableEntry,
+        .searchText = "=",
         .text = "=",
         .isTextInfix = true,
         .defaultChildren =
@@ -581,6 +590,29 @@ void BlockKindsInit(void)
             },
         .defaultChildrenCount = 2,
         .save = SaverSaveTableKeyValuePair,
+    });
+    BlockKinds[BlockKindIdTableExpressionValuePair] = BlockKindNew((BlockKind){
+        .pinKind = PinKindTableEntry,
+        .searchText = "[]",
+        .text = "[]",
+        .isTextInfix = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveTableExpressionValuePair,
+    });
+    BlockKinds[BlockKindIdTableValue] = BlockKindNew((BlockKind){
+        .pinKind = PinKindTableEntry,
+        .searchText = ",",
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 1,
+        .save = SaverSaveTableValue,
     });
 }
 

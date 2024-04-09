@@ -14,6 +14,7 @@ typedef enum PinKind
     PinKindExpression,
     PinKindStatement,
     PinKindIdentifier,
+    PinKindTableEntry,
     PinKindNone,
 } PinKind;
 
@@ -57,6 +58,8 @@ typedef enum BlockKindId
     BlockKindIdWhileLoop,
     BlockKindIdTable,
     BlockKindIdTableKeyValuePair,
+    BlockKindIdTableExpressionValuePair,
+    BlockKindIdTableValue,
 
     BlockKindIdCount,
 } BlockKindId;
