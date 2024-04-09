@@ -19,6 +19,7 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/glfw-3.3.8 ${CMAKE_CURRENT_BIN
 
 target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
 
+set(FT_DISABLE_HARFBUZZ TRUE)
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/deps/freetype ${CMAKE_CURRENT_BINARY_DIR}/freetype)
 target_link_libraries(${PROJECT_NAME} PRIVATE freetype)
 
