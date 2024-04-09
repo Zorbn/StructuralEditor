@@ -386,7 +386,7 @@ void SaverSaveWhileLoop(Saver *saver, Block *block)
 void SaverSaveReturn(Saver *saver, Block *block)
 {
     WriterWrite(&saver->writer, "return ");
-    SaverSave(saver, BlockGetChild(block, 0));
+    SaverSaveBlockList(saver, block, 0, ", ");
 }
 
 void SaverSaveLocal(Saver *saver, Block *block)

@@ -578,6 +578,7 @@ void BlockKindsInit(void)
         .pinKind = PinKindStatement,
         .searchText = "return",
         .text = "return",
+        .isGrowable = true,
         .defaultChildren =
             (DefaultChildKind[]){
                 NewChildPin(PinKindExpression),

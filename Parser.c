@@ -241,7 +241,19 @@ Block *ParserParseReturn(Parser *parser, Block *parent, int32_t childI)
 
     Block *returnBlock = BlockNew(BlockKindIdReturn, parent, childI);
 
-    BlockReplaceChild(returnBlock, ParserParseExpression(parser, returnBlock, 0), 0, true);
+    if (!ParserHas(parser, "end"))
+    {
+        BlockReplaceChild(returnBlock, ParserParseExpression(parser, returnBlock, 0), 0, true);
+    }
+
+    int32_t i = 1;
+    while (ParserHas(parser, ","))
+    {
+        LexerNext(&parser->lexer);
+        BlockReplaceChild(returnBlock, ParserParseExpression(parser, returnBlock, i), i, true);
+
+        i += 1;
+    }
 
     return returnBlock;
 }
@@ -250,23 +262,21 @@ Block *ParserParseLocal(Parser *parser, Block *parent, int32_t childI)
 {
     ParserMatch(parser, "local");
 
-    Block *returnBlock = BlockNew(BlockKindIdReturn, parent, childI);
+    Block *localBlock = BlockNew(BlockKindIdLocal, parent, childI);
     Block *child = NULL;
 
     if (ParserHas(parser, "function"))
     {
-        LexerNext(&parser->lexer);
-
-        child = ParserParseFunction(parser, returnBlock, 0);
+        child = ParserParseFunction(parser, localBlock, 0);
     }
     else
     {
-        child = ParserParseAssign(parser, returnBlock, 0);
+        child = ParserParseAssign(parser, localBlock, 0);
     }
 
-    BlockReplaceChild(returnBlock, child, 0, true);
+    BlockReplaceChild(localBlock, child, 0, true);
 
-    return returnBlock;
+    return localBlock;
 }
 
 Block *ParserParseAssign(Parser *parser, Block  *parent, int32_t childI)
@@ -325,7 +335,7 @@ Block *ParserParseLambdaFunction(Parser *parser, Block *parent, int32_t childI)
     return lambdaFunction;
 }
 
-static Block *ParserParseBlockList(Parser *parser, Block *parent, int32_t childI, BlockKindId kindId, char *separator,
+static Block *ParserParseExpressionList(Parser *parser, Block *parent, int32_t childI, BlockKindId kindId, char *separator,
     Block *(*innerParseFunction)(Parser *parser, Block *parent, int32_t childI))
 {
     Block *left = innerParseFunction(parser, parent, childI);
@@ -351,7 +361,7 @@ static Block *ParserParseBlockList(Parser *parser, Block *parent, int32_t childI
     return block;
 }
 
-static Block *ParserParseBlockPair(Parser *parser, Block *parent, int32_t childI, BlockKindId kindId, char *separator,
+static Block *ParserParseExpressionPair(Parser *parser, Block *parent, int32_t childI, BlockKindId kindId, char *separator,
     Block *(*innerParseFunction)(Parser *parser, Block *parent, int32_t childI))
 {
     Block *left = innerParseFunction(parser, parent, childI);
@@ -372,72 +382,72 @@ static Block *ParserParseBlockPair(Parser *parser, Block *parent, int32_t childI
 
 Block *ParserParseConcatenate(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdConcatenate, "..", ParserParseUnaryPrefix);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdConcatenate, "..", ParserParseUnaryPrefix);
 }
 
 Block *ParserParseModulo(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdModulo, "%", ParserParseConcatenate);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdModulo, "%", ParserParseConcatenate);
 }
 
 Block *ParserParseDivide(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdDivide, "/", ParserParseModulo);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdDivide, "/", ParserParseModulo);
 }
 
 Block *ParserParseMultiply(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdMultiply, "*", ParserParseDivide);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdMultiply, "*", ParserParseDivide);
 }
 
 Block *ParserParseSubtract(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdSubtract, "-", ParserParseMultiply);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdSubtract, "-", ParserParseMultiply);
 }
 
 Block *ParserParseAdd(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdAdd, "+", ParserParseSubtract);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdAdd, "+", ParserParseSubtract);
 }
 
 Block *ParserParseGreaterEqual(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockPair(parser, parent, childI, BlockKindIdGreaterEqual, ">=", ParserParseAdd);
+    return ParserParseExpressionPair(parser, parent, childI, BlockKindIdGreaterEqual, ">=", ParserParseAdd);
 }
 
 Block *ParserParseLessEqual(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockPair(parser, parent, childI, BlockKindIdLessEqual, "<=", ParserParseGreaterEqual);
+    return ParserParseExpressionPair(parser, parent, childI, BlockKindIdLessEqual, "<=", ParserParseGreaterEqual);
 }
 
 Block *ParserParseGreater(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockPair(parser, parent, childI, BlockKindIdGreater, ">", ParserParseLessEqual);
+    return ParserParseExpressionPair(parser, parent, childI, BlockKindIdGreater, ">", ParserParseLessEqual);
 }
 
 Block *ParserParseLess(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockPair(parser, parent, childI, BlockKindIdLess, "<", ParserParseGreater);
+    return ParserParseExpressionPair(parser, parent, childI, BlockKindIdLess, "<", ParserParseGreater);
 }
 
 Block *ParserParseNotEqual(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdNotEqual, "!=", ParserParseLess);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdNotEqual, "!=", ParserParseLess);
 }
 
 Block *ParserParseEqual(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdEqual, "==", ParserParseNotEqual);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdEqual, "==", ParserParseNotEqual);
 }
 
 Block *ParserParseAnd(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdAnd, "and", ParserParseEqual);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdAnd, "and", ParserParseEqual);
 }
 
 Block *ParserParseOr(Parser *parser, Block *parent, int32_t childI)
 {
-    return ParserParseBlockList(parser, parent, childI, BlockKindIdOr, "or", ParserParseAnd);
+    return ParserParseExpressionList(parser, parent, childI, BlockKindIdOr, "or", ParserParseAnd);
 }
 
 Block *ParserParseUnaryPrefix(Parser *parser, Block *parent, int32_t childI)
