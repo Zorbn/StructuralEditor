@@ -187,6 +187,11 @@ void SaverSaveIf(Saver *saver, Block *block)
     WriterWrite(&saver->writer, "end");
 }
 
+void SaverSaveExpressionList(Saver *saver, Block *block)
+{
+    SaverSaveBlockList(saver, block, 0, ", ");
+}
+
 void SaverSaveAssign(Saver *saver, Block *block)
 {
     SaverSave(saver, BlockGetChild(block, 0));

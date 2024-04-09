@@ -41,7 +41,6 @@
  *
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
- * Multi-assignment,
  */
 
 static const float DefaultFontSize = 16;

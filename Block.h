@@ -11,12 +11,13 @@
 
 typedef enum PinKind
 {
+    PinKindNone,
     PinKindExpression,
     PinKindStatement,
     PinKindIdentifier,
     PinKindTableEntry,
     PinKindAccessModifiable,
-    PinKindNone,
+    PinKindMultiExpression,
 } PinKind;
 
 typedef enum BlockKindId
@@ -32,6 +33,7 @@ typedef enum BlockKindId
     BlockKindIdIfCases,
     BlockKindIdElseCase,
     BlockKindIdIf,
+    BlockKindIdExpressionList,
     BlockKindIdAssign,
     BlockKindIdNot,
     BlockKindIdLength,
@@ -71,6 +73,7 @@ typedef struct PinKindInsertBlocks
 {
     BlockKindId *blockKindIds;
     int32_t blockKindIdCount;
+    PinKind extendsPinKind;
 } PinKindInsertBlocks;
 
 typedef struct DefaultChildKind

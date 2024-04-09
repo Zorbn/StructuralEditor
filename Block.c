@@ -111,6 +111,13 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
         },
         .blockKindIdCount = 2,
     },
+    [PinKindMultiExpression] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdExpressionList,
+        },
+        .blockKindIdCount = 1,
+        .extendsPinKind = PinKindExpression,
+    },
     [PinKindNone] = {
         .blockKindIdCount = 0,
     },
@@ -245,6 +252,19 @@ void BlockKindsInit(void)
         .defaultChildrenCount = 2,
         .save = SaverSaveIf,
     });
+    BlockKinds[BlockKindIdExpressionList] = BlockKindNew((BlockKind){
+        .pinKind = PinKindMultiExpression,
+        .searchText = ",",
+        .text = ",",
+        .isTextInfix = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 1,
+        .save = SaverSaveExpressionList,
+    });
     BlockKinds[BlockKindIdAssign] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
         .searchText = "=",
@@ -252,8 +272,8 @@ void BlockKindsInit(void)
         .isTextInfix = true,
         .defaultChildren =
             (DefaultChildKind[]){
-                NewChildPin(PinKindExpression),
-                NewChildPin(PinKindExpression),
+                NewChildPin(PinKindMultiExpression),
+                NewChildPin(PinKindMultiExpression),
             },
         .defaultChildrenCount = 2,
         .save = SaverSaveAssign,

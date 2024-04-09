@@ -159,7 +159,8 @@ static void CommandUndo(Cursor *cursor, Command *command)
         }
         else
         {
-            BlockReplaceChild(command->data.delete.parent, command->data.delete.oldChild, command->data.delete.childI, true);
+            BlockReplaceChild(
+                command->data.delete.parent, command->data.delete.oldChild, command->data.delete.childI, true);
         }
 
         BlockMarkNeedsUpdate(command->data.delete.oldChild);
@@ -527,6 +528,56 @@ static bool ListMatchesString(List_char *list, char *string)
     return string[list->count] == '\0';
 }
 
+static bool CursorIteratePinKindInsertBlocks(Cursor *cursor, PinKind pinKind, Block *parent, int32_t childI,
+    bool (*stepFunction)(Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI))
+{
+    const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[pinKind];
+
+    if (insertBlocks->extendsPinKind != PinKindNone)
+    {
+        if (CursorIteratePinKindInsertBlocks(cursor, insertBlocks->extendsPinKind, parent, childI, stepFunction))
+        {
+            return true;
+        }
+    }
+
+    for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
+    {
+        BlockKindId kindId = insertBlocks->blockKindIds[i];
+        const BlockKind *kind = &BlockKinds[kindId];
+
+        if (stepFunction(cursor, kindId, kind, parent, childI))
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+static bool CursorAddSearchResults(Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI)
+{
+    (void)kindId, (void)parent, (void)childI;
+
+    SearchBarTryAddResult(&cursor->searchBar, kind->searchText);
+
+    return false;
+}
+
+static bool CursorFindMatchingResult(Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI)
+{
+    if (!ListMatchesString(&cursor->searchBar.text, kind->searchText))
+    {
+        return false;
+    }
+
+    Block *block = BlockNew(kindId, parent, childI);
+    CursorAddChild(cursor, parent, block, childI);
+    CursorEndInsert(cursor);
+
+    return true;
+}
+
 static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 {
     int32_t childI;
@@ -535,7 +586,6 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
     const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
     Block *parent = cursor->block->parent;
 
-    const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[defaultChildKind->pinKind];
     SearchBarState searchState = SearchBarUpdate(&cursor->searchBar, input);
 
     if (searchState == SearchBarStateUpdated)
@@ -544,13 +594,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 
         if (cursor->searchBar.text.count != 0)
         {
-            for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
-            {
-                BlockKindId kindId = insertBlocks->blockKindIds[i];
-                const BlockKind *kind = &BlockKinds[kindId];
-
-                SearchBarTryAddResult(&cursor->searchBar, kind->searchText);
-            }
+            CursorIteratePinKindInsertBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorAddSearchResults);
         }
     }
 
@@ -565,20 +609,8 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
             return;
         }
 
-        for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
+        if (CursorIteratePinKindInsertBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorFindMatchingResult))
         {
-            BlockKindId kindId = insertBlocks->blockKindIds[i];
-            const BlockKind *kind = &BlockKinds[kindId];
-
-            if (!ListMatchesString(&cursor->searchBar.text, kind->searchText))
-            {
-                continue;
-            }
-
-            Block *block = BlockNew(kindId, parent, childI);
-            CursorAddChild(cursor, parent, block, childI);
-            CursorEndInsert(cursor);
-
             return;
         }
 
