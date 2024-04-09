@@ -26,15 +26,15 @@ static DefaultChildKind NewChildPin(PinKind childPinKind)
     };
 }
 
-static PinKind DefaultChildKindGetPinKind(DefaultChildKind *defaultChildKind)
-{
-    if (defaultChildKind->isPin)
-    {
-        return defaultChildKind->pinKind;
-    }
+// static PinKind DefaultChildKindGetPinKind(DefaultChildKind *defaultChildKind)
+// {
+//     if (defaultChildKind->isPin)
+//     {
+//         return defaultChildKind->pinKind;
+//     }
 
-    return BlockKinds[defaultChildKind->blockKindId].pinKind;
-}
+//     return BlockKinds[defaultChildKind->blockKindId].pinKind;
+// }
 
 BlockKind BlockKindNew(BlockKind blockKind)
 {
@@ -50,7 +50,7 @@ BlockKind BlockKindNew(BlockKind blockKind)
     return blockKind;
 }
 
-const PinKindInsertBlocks PinInsertBlocks[] = {
+const PinKindValidBlockSet PinKindValidBlocks[] = {
     [PinKindExpression] = {
         .blockKindIds = (BlockKindId[]){
             BlockKindIdLambdaFunction,
@@ -128,12 +128,10 @@ BlockKind BlockKinds[BlockKindIdCount];
 void BlockKindsInit(void)
 {
     BlockKinds[BlockKindIdPin] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .text = ".",
         .save = SaverSavePin,
     });
     BlockKinds[BlockKindIdDo] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "do",
         .text = "do",
         .isVertical = true,
@@ -146,7 +144,6 @@ void BlockKindsInit(void)
         .save = SaverSaveDo,
     });
     BlockKinds[BlockKindIdStatementList] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .isVertical = true,
         .isGrowable = true,
         .defaultChildren =
@@ -157,7 +154,6 @@ void BlockKindsInit(void)
         .save = SaverSaveStatementList,
     });
     BlockKinds[BlockKindIdFunctionHeader] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .text = "function",
         .isGrowable = true,
         .defaultChildren =
@@ -169,7 +165,6 @@ void BlockKindsInit(void)
         .save = SaverSaveFunctionHeader,
     });
     BlockKinds[BlockKindIdFunction] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "function",
         .isVertical = true,
         .defaultChildren =
@@ -181,7 +176,6 @@ void BlockKindsInit(void)
         .save = SaverSaveFunction,
     });
     BlockKinds[BlockKindIdLambdaFunctionHeader] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .text = "function",
         .isGrowable = true,
         .defaultChildren =
@@ -192,7 +186,6 @@ void BlockKindsInit(void)
         .save = SaverSaveLambdaFunctionHeader,
     });
     BlockKinds[BlockKindIdLambdaFunction] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "function",
         .isVertical = true,
         .defaultChildren =
@@ -204,7 +197,6 @@ void BlockKindsInit(void)
         .save = SaverSaveLambdaFunction,
     });
     BlockKinds[BlockKindIdCase] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .text = "case",
         .isVertical = true,
         .isGrowable = true,
@@ -217,7 +209,6 @@ void BlockKindsInit(void)
         .save = SaverSaveCase,
     });
     BlockKinds[BlockKindIdIfCases] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .text = "if",
         .isVertical = true,
         .isGrowable = true,
@@ -229,7 +220,6 @@ void BlockKindsInit(void)
         .save = SaverSaveIfCases,
     });
     BlockKinds[BlockKindIdElseCase] = BlockKindNew((BlockKind){
-        .pinKind = PinKindNone,
         .text = "else",
         .isVertical = true,
         .isGrowable = true,
@@ -241,7 +231,6 @@ void BlockKindsInit(void)
         .save = SaverSaveElseCase,
     });
     BlockKinds[BlockKindIdIf] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "if",
         .isVertical = true,
         .defaultChildren =
@@ -253,7 +242,6 @@ void BlockKindsInit(void)
         .save = SaverSaveIf,
     });
     BlockKinds[BlockKindIdExpressionList] = BlockKindNew((BlockKind){
-        .pinKind = PinKindMultiExpression,
         .searchText = ",",
         .text = ",",
         .isTextInfix = true,
@@ -266,7 +254,6 @@ void BlockKindsInit(void)
         .save = SaverSaveExpressionList,
     });
     BlockKinds[BlockKindIdAssign] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "=",
         .text = "=",
         .isTextInfix = true,
@@ -279,7 +266,6 @@ void BlockKindsInit(void)
         .save = SaverSaveAssign,
     });
     BlockKinds[BlockKindIdNot] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "not",
         .text = "not",
         .defaultChildren =
@@ -290,7 +276,6 @@ void BlockKindsInit(void)
         .save = SaverSaveNot,
     });
     BlockKinds[BlockKindIdLength] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "#",
         .text = "#",
         .defaultChildren =
@@ -301,7 +286,6 @@ void BlockKindsInit(void)
         .save = SaverSaveLength,
     });
     BlockKinds[BlockKindIdConcatenate] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "..",
         .text = "..",
         .isTextInfix = true,
@@ -316,7 +300,6 @@ void BlockKindsInit(void)
         .save = SaverSaveConcatenate,
     });
     BlockKinds[BlockKindIdModulo] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "%",
         .text = "%",
         .isTextInfix = true,
@@ -331,7 +314,6 @@ void BlockKindsInit(void)
         .save = SaverSaveModulo,
     });
     BlockKinds[BlockKindIdDivide] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "/",
         .text = "/",
         .isTextInfix = true,
@@ -346,7 +328,6 @@ void BlockKindsInit(void)
         .save = SaverSaveDivide,
     });
     BlockKinds[BlockKindIdMultiply] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "*",
         .text = "*",
         .isTextInfix = true,
@@ -361,7 +342,6 @@ void BlockKindsInit(void)
         .save = SaverSaveMultiply,
     });
     BlockKinds[BlockKindIdSubtract] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "-",
         .text = "-",
         .isTextInfix = true,
@@ -376,7 +356,6 @@ void BlockKindsInit(void)
         .save = SaverSaveSubtract,
     });
     BlockKinds[BlockKindIdAdd] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "+",
         .text = "+",
         .isTextInfix = true,
@@ -391,7 +370,6 @@ void BlockKindsInit(void)
         .save = SaverSaveAdd,
     });
     BlockKinds[BlockKindIdGreaterEqual] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = ">=",
         .text = ">=",
         .isTextInfix = true,
@@ -404,7 +382,6 @@ void BlockKindsInit(void)
         .save = SaverSaveGreaterEqual,
     });
     BlockKinds[BlockKindIdLessEqual] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "<=",
         .text = "<=",
         .isTextInfix = true,
@@ -417,7 +394,6 @@ void BlockKindsInit(void)
         .save = SaverSaveLessEqual,
     });
     BlockKinds[BlockKindIdGreater] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = ">",
         .text = ">",
         .isTextInfix = true,
@@ -430,7 +406,6 @@ void BlockKindsInit(void)
         .save = SaverSaveGreater,
     });
     BlockKinds[BlockKindIdLess] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "<",
         .text = "<",
         .isTextInfix = true,
@@ -443,7 +418,6 @@ void BlockKindsInit(void)
         .save = SaverSaveLess,
     });
     BlockKinds[BlockKindIdNotEqual] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "!=",
         .text = "!=",
         .isTextInfix = true,
@@ -458,7 +432,6 @@ void BlockKindsInit(void)
         .save = SaverSaveNotEqual,
     });
     BlockKinds[BlockKindIdEqual] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "==",
         .text = "==",
         .isTextInfix = true,
@@ -473,7 +446,6 @@ void BlockKindsInit(void)
         .save = SaverSaveEqual,
     });
     BlockKinds[BlockKindIdAnd] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "and",
         .text = "and",
         .isTextInfix = true,
@@ -488,7 +460,6 @@ void BlockKindsInit(void)
         .save = SaverSaveAnd,
     });
     BlockKinds[BlockKindIdOr] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "or",
         .text = "or",
         .isTextInfix = true,
@@ -503,7 +474,6 @@ void BlockKindsInit(void)
         .save = SaverSaveOr,
     });
     BlockKinds[BlockKindIdCall] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "call",
         .text = "call",
         .isGrowable = true,
@@ -516,12 +486,10 @@ void BlockKindsInit(void)
         .save = SaverSaveCall,
     });
     BlockKinds[BlockKindIdIdentifier] = BlockKindNew((BlockKind){
-        .pinKind = PinKindIdentifier,
         .defaultChildrenCount = 0,
         .save = SaverSaveIdentifier,
     });
     BlockKinds[BlockKindIdForLoop] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "for",
         .text = "for",
         .isVertical = true,
@@ -534,7 +502,6 @@ void BlockKindsInit(void)
         .save = SaverSaveForLoop,
     });
     BlockKinds[BlockKindIdForLoopCondition] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .text = "=",
         .isTextInfix = true,
         .defaultChildren =
@@ -546,7 +513,6 @@ void BlockKindsInit(void)
         .save = SaverSaveForLoopCondition,
     });
     BlockKinds[BlockKindIdForLoopBounds] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .defaultChildren =
             (DefaultChildKind[]){
                 NewChildPin(PinKindExpression),
@@ -557,7 +523,6 @@ void BlockKindsInit(void)
         .save = SaverSaveForLoopBounds,
     });
     BlockKinds[BlockKindIdForInLoop] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "for in",
         .text = "for",
         .isVertical = true,
@@ -570,7 +535,6 @@ void BlockKindsInit(void)
         .save = SaverSaveForLoop,
     });
     BlockKinds[BlockKindIdForInLoopCondition] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .text = "in",
         .isTextInfix = true,
         .defaultChildren =
@@ -582,7 +546,6 @@ void BlockKindsInit(void)
         .save = SaverSaveForInLoopCondition,
     });
     BlockKinds[BlockKindIdWhileLoop] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "while",
         .text = "while",
         .isVertical = true,
@@ -595,7 +558,6 @@ void BlockKindsInit(void)
         .save = SaverSaveWhileLoop,
     });
     BlockKinds[BlockKindIdReturn] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "return",
         .text = "return",
         .isGrowable = true,
@@ -607,7 +569,6 @@ void BlockKindsInit(void)
         .save = SaverSaveReturn,
     });
     BlockKinds[BlockKindIdLocal] = BlockKindNew((BlockKind){
-        .pinKind = PinKindStatement,
         .searchText = "local",
         .text = "local",
         .defaultChildren =
@@ -618,7 +579,6 @@ void BlockKindsInit(void)
         .save = SaverSaveLocal,
     });
     BlockKinds[BlockKindIdTable] = BlockKindNew((BlockKind){
-        .pinKind = PinKindExpression,
         .searchText = "table",
         .text = "table",
         .isVertical = true,
@@ -631,7 +591,6 @@ void BlockKindsInit(void)
         .save = SaverSaveTable,
     });
     BlockKinds[BlockKindIdTableKeyValuePair] = BlockKindNew((BlockKind){
-        .pinKind = PinKindTableEntry,
         .searchText = "=",
         .text = "=",
         .isTextInfix = true,
@@ -644,7 +603,6 @@ void BlockKindsInit(void)
         .save = SaverSaveTableKeyValuePair,
     });
     BlockKinds[BlockKindIdTableExpressionValuePair] = BlockKindNew((BlockKind){
-        .pinKind = PinKindTableEntry,
         .searchText = "[]",
         .text = "[]",
         .isTextInfix = true,
@@ -657,7 +615,6 @@ void BlockKindsInit(void)
         .save = SaverSaveTableExpressionValuePair,
     });
     BlockKinds[BlockKindIdTableValue] = BlockKindNew((BlockKind){
-        .pinKind = PinKindTableEntry,
         .searchText = ",",
         .defaultChildren =
             (DefaultChildKind[]){
@@ -863,7 +820,7 @@ void BlockGetTextSize(Block *block, int32_t *width, int32_t *height)
     *height = BlockKinds[block->kindId].textHeight;
 }
 
-DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI)
+DefaultChildKind *BlockGetDefaultChildKind(Block *block, int32_t childI)
 {
     const BlockKind *kind = &BlockKinds[block->kindId];
     childI = MathInt32Min(childI, kind->defaultChildrenCount - 1);
@@ -892,19 +849,62 @@ void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y)
     }
 }
 
-bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind)
+// TODO: Unify this function with the cursor's pin kind iterator function if possible.
+// TODO: Can we remove .pinKind from block kinds?
+bool BlockCanPinKindContainBlockKind(BlockKindId blockKindId, PinKind pinKind)
 {
-    if (!block->parent)
+    const PinKindValidBlockSet *validBlocks = &PinKindValidBlocks[pinKind];
+
+    if (validBlocks->extendsPinKind != PinKindNone)
     {
-        return false;
+        if (BlockCanPinKindContainBlockKind(blockKindId, validBlocks->extendsPinKind))
+        {
+            return true;
+        }
     }
 
-    DefaultChildKind *defaultChildKind = BlockGetDefaultChild(block->parent, block->childI);
+    for (int32_t i = 0; i < validBlocks->blockKindIdCount; i++)
+    {
+        BlockKindId kindId = validBlocks->blockKindIds[i];
 
-    PinKind pinKind = DefaultChildKindGetPinKind(defaultChildKind);
-    PinKind otherPinKind = DefaultChildKindGetPinKind(otherDefaultChildKind);
+        if (blockKindId == kindId)
+        {
+            return true;
+        }
+    }
 
-    return pinKind == otherPinKind;
+    return false;
+}
+
+static bool BlockCanSwapInto(Block *block, DefaultChildKind *destinationDefaultChildKind)
+{
+    if (!destinationDefaultChildKind->isPin)
+    {
+        return block->kindId == destinationDefaultChildKind->blockKindId;
+    }
+
+    return block->kindId == BlockKindIdPin || BlockCanPinKindContainBlockKind(block->kindId, destinationDefaultChildKind->pinKind);
+}
+
+bool BlockCanSwapWith(Block *block, Block *other)
+{
+    bool canBlockSwapWithOther = true;
+
+    if (other->parent)
+    {
+        DefaultChildKind *otherDefaultChildKind = BlockGetDefaultChildKind(other->parent, other->childI);
+        canBlockSwapWithOther = BlockCanSwapInto(block, otherDefaultChildKind);
+    }
+
+    bool canOtherSwapWithBlock = true;
+
+    if (block->parent)
+    {
+        DefaultChildKind *defaultChildKind = BlockGetDefaultChildKind(block->parent, block->childI);
+        canOtherSwapWithBlock = BlockCanSwapInto(other, defaultChildKind);
+    }
+
+    return canBlockSwapWithOther && canOtherSwapWithBlock;
 }
 
 // Frees the old child if it exists, expands this block's children array as necessary.
@@ -983,7 +983,7 @@ BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete)
 
     // This is a default child, so it needs to be preserved. Replace it with
     // it's default value instead of deleting it.
-    DefaultChildKind *defaultKind = BlockGetDefaultChild(block, childI);
+    DefaultChildKind *defaultKind = BlockGetDefaultChildKind(block, childI);
 
     Block *defaultBlock = BlockNew(defaultKind->blockKindId, block, childI);
     BlockReplaceChild(block, defaultBlock, childI, doDelete);
@@ -999,9 +999,8 @@ void BlockSwapChildren(Block *block, int32_t firstChildI, int32_t secondChildI)
     BlockParentData *parentData = &block->data.parent;
     Block *firstChild = parentData->children.data[firstChildI];
     Block *secondChild = parentData->children.data[secondChildI];
-    DefaultChildKind *secondDefaultChildKind = BlockGetDefaultChild(block, secondChildI);
 
-    if (!BlockCanSwapWith(firstChild, secondDefaultChildKind))
+    if (!BlockCanSwapWith(firstChild, secondChild))
     {
         return;
     }

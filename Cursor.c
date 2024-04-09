@@ -333,7 +333,7 @@ static void CursorStartInsert(Cursor *cursor, InsertDirection insertDirection)
 
     cursor->state = CursorStateInsert;
 
-    const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
+    const DefaultChildKind *defaultChildKind = BlockGetDefaultChildKind(cursor->block->parent, cursor->block->childI);
     Block *parent = cursor->block->parent;
 
     if (parent && !defaultChildKind->isPin)
@@ -380,7 +380,6 @@ static void CursorCopy(Cursor *cursor)
     }
 
     cursor->clipboardBlock = BlockCopy(cursor->block, NULL, 0);
-    cursor->clipboardDefaultChildKind = BlockGetDefaultChild(cursor->block->parent, cursor->block->childI);
 }
 
 static void CursorCut(Cursor *cursor)
@@ -396,7 +395,7 @@ static void CursorPaste(Cursor *cursor)
         return;
     }
 
-    if (!BlockCanSwapWith(cursor->block, cursor->clipboardDefaultChildKind))
+    if (!BlockCanSwapWith(cursor->block, cursor->clipboardBlock))
     {
         return;
     }
@@ -528,22 +527,22 @@ static bool ListMatchesString(List_char *list, char *string)
     return string[list->count] == '\0';
 }
 
-static bool CursorIteratePinKindInsertBlocks(Cursor *cursor, PinKind pinKind, Block *parent, int32_t childI,
+static bool CursorIteratePinKindValidBlocks(Cursor *cursor, PinKind pinKind, Block *parent, int32_t childI,
     bool (*stepFunction)(Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI))
 {
-    const PinKindInsertBlocks *insertBlocks = &PinInsertBlocks[pinKind];
+    const PinKindValidBlockSet *validBlocks = &PinKindValidBlocks[pinKind];
 
-    if (insertBlocks->extendsPinKind != PinKindNone)
+    if (validBlocks->extendsPinKind != PinKindNone)
     {
-        if (CursorIteratePinKindInsertBlocks(cursor, insertBlocks->extendsPinKind, parent, childI, stepFunction))
+        if (CursorIteratePinKindValidBlocks(cursor, validBlocks->extendsPinKind, parent, childI, stepFunction))
         {
             return true;
         }
     }
 
-    for (int32_t i = 0; i < insertBlocks->blockKindIdCount; i++)
+    for (int32_t i = 0; i < validBlocks->blockKindIdCount; i++)
     {
-        BlockKindId kindId = insertBlocks->blockKindIds[i];
+        BlockKindId kindId = validBlocks->blockKindIds[i];
         const BlockKind *kind = &BlockKinds[kindId];
 
         if (stepFunction(cursor, kindId, kind, parent, childI))
@@ -583,7 +582,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
     int32_t childI;
     CursorGetChildInsertIndexInDirection(cursor, &childI);
 
-    const DefaultChildKind *defaultChildKind = BlockGetDefaultChild(cursor->block->parent, childI);
+    const DefaultChildKind *defaultChildKind = BlockGetDefaultChildKind(cursor->block->parent, childI);
     Block *parent = cursor->block->parent;
 
     SearchBarState searchState = SearchBarUpdate(&cursor->searchBar, input);
@@ -594,7 +593,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
 
         if (cursor->searchBar.text.count != 0)
         {
-            CursorIteratePinKindInsertBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorAddSearchResults);
+            CursorIteratePinKindValidBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorAddSearchResults);
         }
     }
 
@@ -609,12 +608,12 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
             return;
         }
 
-        if (CursorIteratePinKindInsertBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorFindMatchingResult))
+        if (CursorIteratePinKindValidBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorFindMatchingResult))
         {
             return;
         }
 
-        if (defaultChildKind->pinKind == PinKindIdentifier || defaultChildKind->pinKind == PinKindExpression)
+        if (BlockCanPinKindContainBlockKind(BlockKindIdIdentifier, defaultChildKind->pinKind))
         {
             Block *block =
                 BlockNewIdentifier(cursor->searchBar.text.data, cursor->searchBar.text.count, font, parent, childI);

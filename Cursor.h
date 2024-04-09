@@ -80,7 +80,6 @@ typedef struct Cursor
 
     Block *block;
     Block *clipboardBlock;
-    DefaultChildKind *clipboardDefaultChildKind;
 
     InsertDirection insertDirection;
 

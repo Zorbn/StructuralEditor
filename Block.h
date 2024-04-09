@@ -69,12 +69,12 @@ typedef enum BlockKindId
     BlockKindIdCount,
 } BlockKindId;
 
-typedef struct PinKindInsertBlocks
+typedef struct PinKindValidBlockSet
 {
     BlockKindId *blockKindIds;
     int32_t blockKindIdCount;
     PinKind extendsPinKind;
-} PinKindInsertBlocks;
+} PinKindValidBlockSet;
 
 typedef struct DefaultChildKind
 {
@@ -85,7 +85,6 @@ typedef struct DefaultChildKind
 
 typedef struct BlockKind
 {
-    PinKind pinKind;
     char *searchText;
     char *text;
     int32_t textWidth;
@@ -99,7 +98,7 @@ typedef struct BlockKind
     void (*save)(Saver *saver, Block *block);
 } BlockKind;
 
-const PinKindInsertBlocks PinInsertBlocks[];
+const PinKindValidBlockSet PinKindValidBlocks[];
 BlockKind BlockKinds[BlockKindIdCount];
 
 typedef struct Block Block;
@@ -159,10 +158,11 @@ bool BlockContainsNonPin(Block *block);
 int32_t BlockGetChildrenCount(Block *block);
 char *BlockGetText(Block *block);
 void BlockGetTextSize(Block *block, int32_t *width, int32_t *height);
-DefaultChildKind *BlockGetDefaultChild(Block *block, int32_t childI);
+DefaultChildKind *BlockGetDefaultChildKind(Block *block, int32_t childI);
 Block *BlockGetChild(Block *block, int32_t childI);
 void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y);
-bool BlockCanSwapWith(Block *block, DefaultChildKind *otherDefaultChildKind);
+bool BlockCanPinKindContainBlockKind(BlockKindId blockKindId, PinKind pinKind);
+bool BlockCanSwapWith(Block *block, Block *other);
 Block *BlockReplaceChild(Block *block, Block *child, int32_t childI, bool doDelete);
 void BlockInsertChild(Block *block, Block *child, int32_t childI);
 BlockDeleteResult BlockDeleteChild(Block *block, int32_t childI, bool doDelete);
