@@ -49,3 +49,5 @@ void SaverSaveForLoopCondition(Saver *saver, Block *block);
 void SaverSaveForLoopBounds(Saver *saver, Block *block);
 void SaverSaveForInLoopCondition(Saver *saver, Block *block);
 void SaverSaveWhileLoop(Saver *saver, Block *block);
+void SaverSaveTable(Saver *saver, Block *block);
+void SaverSaveTableKeyValuePair(Saver *saver, Block *block);

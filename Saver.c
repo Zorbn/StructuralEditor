@@ -382,3 +382,26 @@ void SaverSaveWhileLoop(Saver *saver, Block *block)
 
     WriterWrite(&saver->writer, "end");
 }
+
+void SaverSaveTable(Saver *saver, Block *block)
+{
+    int32_t childrenCount = BlockGetChildrenCount(block);
+
+    for (int32_t i = 0; i < childrenCount; i++)
+    {
+
+        Block *child = BlockGetChild(block, i);
+
+        SaverSave(saver, child);
+        WriterWriteLine(&saver->writer, ", ");
+    }
+}
+
+void SaverSaveTableKeyValuePair(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "{ [");
+    SaverSave(saver, BlockGetChild(block, 0));
+    WriterWrite(&saver->writer, "] = ");
+    SaverSave(saver, BlockGetChild(block, 1));
+    WriterWrite(&saver->writer, " }");
+}

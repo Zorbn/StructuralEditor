@@ -71,6 +71,7 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
             BlockKindIdAnd,
             BlockKindIdOr,
             BlockKindIdCall,
+            BlockKindIdTable,
         },
         .blockKindIdCount = 18,
     },
@@ -555,6 +556,30 @@ void BlockKindsInit(void)
             },
         .defaultChildrenCount = 2,
         .save = SaverSaveWhileLoop,
+    });
+    BlockKinds[BlockKindIdTable] = BlockKindNew((BlockKind){
+        .pinKind = PinKindExpression,
+        .text = "table",
+        .isVertical = true,
+        .isGrowable = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChild(BlockKindIdTableKeyValuePair),
+            },
+        .defaultChildrenCount = 1,
+        .save = SaverSaveTable,
+    });
+    BlockKinds[BlockKindIdTableKeyValuePair] = BlockKindNew((BlockKind){
+        .pinKind = PinKindNone,
+        .text = "=",
+        .isTextInfix = true,
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindIdentifier),
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 2,
+        .save = SaverSaveTableKeyValuePair,
     });
 }
 

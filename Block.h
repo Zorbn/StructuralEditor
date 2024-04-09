@@ -55,6 +55,8 @@ typedef enum BlockKindId
     BlockKindIdForInLoop,
     BlockKindIdForInLoopCondition,
     BlockKindIdWhileLoop,
+    BlockKindIdTable,
+    BlockKindIdTableKeyValuePair,
 
     BlockKindIdCount,
 } BlockKindId;
