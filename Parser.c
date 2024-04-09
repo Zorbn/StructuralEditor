@@ -284,6 +284,7 @@ Block *ParserParseAssign(Parser *parser, Block  *parent, int32_t childI)
     Block *assign = BlockNew(BlockKindIdAssign, parent, childI);
 
     BlockReplaceChild(assign, ParserParseMultiExpression(parser, parent, childI), 0, true);
+    ParserMatch(parser, "=");
     BlockReplaceChild(assign, ParserParseMultiExpression(parser, assign, 1), 1, true);
 
     return assign;
