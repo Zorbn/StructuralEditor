@@ -47,6 +47,8 @@ Block *ParserParseOr(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseUnaryPrefix(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseUnarySuffix(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParsePrimary(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseTable(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseTableKeyValuePair(Parser *parser, Block *parent, int32_t childI);
 
 Block *ParserParseExpression(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI);

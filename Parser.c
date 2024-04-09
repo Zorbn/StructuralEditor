@@ -477,8 +477,49 @@ Block *ParserParsePrimary(Parser *parser, Block *parent, int32_t childI)
     {
         return ParserParseLambdaFunction(parser, parent, childI);
     }
+    else if (ParserHas(parser, "{"))
+    {
+        return ParserParseTable(parser, parent, childI);
+    }
 
     return ParserParseIdentifier(parser, parent, childI);
+}
+
+Block *ParserParseTable(Parser *parser, Block *parent, int32_t childI)
+{
+    ParserMatch(parser, "{");
+
+    Block *table = BlockNew(BlockKindIdTable, parent, childI);
+
+    int32_t i = 0;
+    while (!ParserHas(parser, "}"))
+    {
+        Block *keyValuePair = ParserParseTableKeyValuePair(parser, table, i);
+        BlockReplaceChild(table, keyValuePair, i, true);
+        i += 1;
+
+        if (!ParserHas(parser, ","))
+        {
+            break;
+        }
+
+        LexerNext(&parser->lexer);
+    }
+
+    ParserMatch(parser, "}");
+
+    return table;
+}
+
+Block *ParserParseTableKeyValuePair(Parser *parser, Block *parent, int32_t childI)
+{
+    Block *pair = BlockNew(BlockKindIdTableKeyValuePair, parent, childI);
+
+    BlockReplaceChild(pair, ParserParseIdentifier(parser, pair, 0), 0, true);
+    ParserMatch(parser, "=");
+    BlockReplaceChild(pair, ParserParseExpression(parser, pair, 1), 1, true);
+
+    return pair;
 }
 
 // Pin kinds:

@@ -42,7 +42,7 @@
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
  * Local,
- * Tables ({[key] = value, ..}, {key = value, ..}, and {value, ..}),
+ * Tables ({[key] = value, ..} and {value, ..}),
  * Return,
  * Multi-return and multi-assignment,
  */

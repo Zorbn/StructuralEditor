@@ -73,7 +73,7 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
             BlockKindIdCall,
             BlockKindIdTable,
         },
-        .blockKindIdCount = 18,
+        .blockKindIdCount = 19,
     },
     [PinKindStatement] = {
         .blockKindIds = (BlockKindId[]){
@@ -559,6 +559,7 @@ void BlockKindsInit(void)
     });
     BlockKinds[BlockKindIdTable] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
+        .searchText = "table",
         .text = "table",
         .isVertical = true,
         .isGrowable = true,

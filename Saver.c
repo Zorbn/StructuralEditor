@@ -385,6 +385,9 @@ void SaverSaveWhileLoop(Saver *saver, Block *block)
 
 void SaverSaveTable(Saver *saver, Block *block)
 {
+    WriterWriteLine(&saver->writer, "{");
+    WriterIndent(&saver->writer);
+
     int32_t childrenCount = BlockGetChildrenCount(block);
 
     for (int32_t i = 0; i < childrenCount; i++)
@@ -393,15 +396,23 @@ void SaverSaveTable(Saver *saver, Block *block)
         Block *child = BlockGetChild(block, i);
 
         SaverSave(saver, child);
-        WriterWriteLine(&saver->writer, ", ");
     }
+
+    WriterUnindent(&saver->writer);
+    WriterWrite(&saver->writer, "}");
 }
 
 void SaverSaveTableKeyValuePair(Saver *saver, Block *block)
 {
-    WriterWrite(&saver->writer, "{ [");
+    if (!BlockContainsNonPin(block))
+    {
+        return;
+    }
+
+    // WriterWrite(&saver->writer, "[");
     SaverSave(saver, BlockGetChild(block, 0));
-    WriterWrite(&saver->writer, "] = ");
+    // WriterWrite(&saver->writer, "] = ");
+    WriterWrite(&saver->writer, " = ");
     SaverSave(saver, BlockGetChild(block, 1));
-    WriterWrite(&saver->writer, " }");
+    WriterWriteLine(&saver->writer, ",");
 }
