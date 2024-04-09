@@ -74,6 +74,7 @@ const PinKindValidBlockSet PinKindValidBlocks[] = {
             BlockKindIdTable,
         },
         .blockKindIdCount = 19,
+        .extendsPinKind = PinKindIdentifier,
     },
     [PinKindStatement] = {
         .blockKindIds = (BlockKindId[]){
@@ -850,7 +851,6 @@ void BlockGetGlobalPosition(Block *block, int32_t *x, int32_t *y)
 }
 
 // TODO: Unify this function with the cursor's pin kind iterator function if possible.
-// TODO: Can we remove .pinKind from block kinds?
 bool BlockCanPinKindContainBlockKind(BlockKindId blockKindId, PinKind pinKind)
 {
     const PinKindValidBlockSet *validBlocks = &PinKindValidBlocks[pinKind];
