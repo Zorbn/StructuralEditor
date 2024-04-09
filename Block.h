@@ -15,6 +15,7 @@ typedef enum PinKind
     PinKindStatement,
     PinKindIdentifier,
     PinKindTableEntry,
+    PinKindAccessModifiable,
     PinKindNone,
 } PinKind;
 
@@ -31,7 +32,7 @@ typedef enum BlockKindId
     BlockKindIdIfCases,
     BlockKindIdElseCase,
     BlockKindIdIf,
-    BlockKindIdAssignment,
+    BlockKindIdAssign,
     BlockKindIdNot,
     BlockKindIdLength,
     BlockKindIdConcatenate,
@@ -56,6 +57,8 @@ typedef enum BlockKindId
     BlockKindIdForInLoop,
     BlockKindIdForInLoopCondition,
     BlockKindIdWhileLoop,
+    BlockKindIdReturn,
+    BlockKindIdLocal,
     BlockKindIdTable,
     BlockKindIdTableKeyValuePair,
     BlockKindIdTableExpressionValuePair,

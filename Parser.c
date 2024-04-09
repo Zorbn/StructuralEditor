@@ -235,6 +235,50 @@ Block *ParserParseWhileLoop(Parser *parser, Block *parent, int32_t childI)
     return whileLoop;
 }
 
+Block *ParserParseReturn(Parser *parser, Block *parent, int32_t childI)
+{
+    ParserMatch(parser, "return");
+
+    Block *returnBlock = BlockNew(BlockKindIdReturn, parent, childI);
+
+    BlockReplaceChild(returnBlock, ParserParseExpression(parser, returnBlock, 0), 0, true);
+
+    return returnBlock;
+}
+
+Block *ParserParseLocal(Parser *parser, Block *parent, int32_t childI)
+{
+    ParserMatch(parser, "local");
+
+    Block *returnBlock = BlockNew(BlockKindIdReturn, parent, childI);
+    Block *child = NULL;
+
+    if (ParserHas(parser, "function"))
+    {
+        LexerNext(&parser->lexer);
+
+        child = ParserParseFunction(parser, returnBlock, 0);
+    }
+    else
+    {
+        child = ParserParseAssign(parser, returnBlock, 0);
+    }
+
+    BlockReplaceChild(returnBlock, child, 0, true);
+
+    return returnBlock;
+}
+
+Block *ParserParseAssign(Parser *parser, Block  *parent, int32_t childI)
+{
+    Block *assign = BlockNew(BlockKindIdAssign, parent, childI);
+
+    BlockReplaceChild(assign, ParserParseExpression(parser, parent, childI), 0, true);
+    BlockReplaceChild(assign, ParserParseExpression(parser, assign, 1), 1, true);
+
+    return assign;
+}
+
 Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI)
 {
     Block *functionHeader = BlockNew(BlockKindIdFunctionHeader, parent, childI);
@@ -292,7 +336,6 @@ static Block *ParserParseBlockList(Parser *parser, Block *parent, int32_t childI
     }
 
     Block *block = BlockNew(kindId, parent, childI);
-    left->parent = block;
     BlockReplaceChild(block, left, 0, true);
 
     int32_t i = 1;
@@ -445,7 +488,6 @@ Block *ParserParseUnarySuffix(Parser *parser, Block *parent, int32_t childI)
         LexerNext(&parser->lexer);
 
         Block *call = BlockNew(BlockKindIdCall, parent, childI);
-        left->parent = call;
         BlockReplaceChild(call, left, 0, true);
 
         int32_t i = 1;
@@ -580,6 +622,14 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
     {
         return ParserParseWhileLoop(parser, parent, childI);
     }
+    else if (LexerTokenEquals(&parser->lexer, start, "return"))
+    {
+        return ParserParseReturn(parser, parent, childI);
+    }
+    else if (LexerTokenEquals(&parser->lexer, start, "local"))
+    {
+        return ParserParseLocal(parser, parent, childI);
+    }
 
     Block *expression = ParserParseExpression(parser, parent, childI);
 
@@ -590,13 +640,12 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
 
     LexerNext(&parser->lexer);
 
-    Block *assignment = BlockNew(BlockKindIdAssignment, parent, childI);
-    expression->parent = assignment;
-    Block *rightExpression = ParserParseExpression(parser, assignment, 1);
-    BlockReplaceChild(assignment, expression, 0, true);
-    BlockReplaceChild(assignment, rightExpression, 1, true);
+    Block *assign = BlockNew(BlockKindIdAssign, parent, childI);
+    Block *rightExpression = ParserParseExpression(parser, assign, 1);
+    BlockReplaceChild(assign, expression, 0, true);
+    BlockReplaceChild(assign, rightExpression, 1, true);
 
-    return assignment;
+    return assign;
 }
 
 // TODO: Simplify identifiers, ie: table.field should not be an identifier, it should be (. table field) where table and

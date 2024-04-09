@@ -187,7 +187,7 @@ void SaverSaveIf(Saver *saver, Block *block)
     WriterWrite(&saver->writer, "end");
 }
 
-void SaverSaveAssignment(Saver *saver, Block *block)
+void SaverSaveAssign(Saver *saver, Block *block)
 {
     SaverSave(saver, BlockGetChild(block, 0));
     WriterWrite(&saver->writer, " = ");
@@ -381,6 +381,18 @@ void SaverSaveWhileLoop(Saver *saver, Block *block)
     WriterUnindent(&saver->writer);
 
     WriterWrite(&saver->writer, "end");
+}
+
+void SaverSaveReturn(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "return ");
+    SaverSave(saver, BlockGetChild(block, 0));
+}
+
+void SaverSaveLocal(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "local ");
+    SaverSave(saver, BlockGetChild(block, 0));
 }
 
 void SaverSaveTable(Saver *saver, Block *block)

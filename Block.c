@@ -77,7 +77,7 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
     },
     [PinKindStatement] = {
         .blockKindIds = (BlockKindId[]){
-            BlockKindIdAssignment,
+            BlockKindIdAssign,
             BlockKindIdDo,
             BlockKindIdFunction,
             BlockKindIdIf,
@@ -85,8 +85,10 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
             BlockKindIdForLoop,
             BlockKindIdForInLoop,
             BlockKindIdWhileLoop,
+            BlockKindIdReturn,
+            BlockKindIdLocal,
         },
-        .blockKindIdCount = 8,
+        .blockKindIdCount = 10,
     },
     [PinKindIdentifier] = {
         .blockKindIds = (BlockKindId[]){
@@ -101,6 +103,13 @@ const PinKindInsertBlocks PinInsertBlocks[] = {
             BlockKindIdTableValue,
         },
         .blockKindIdCount = 3,
+    },
+    [PinKindAccessModifiable] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdAssign,
+            BlockKindIdFunction,
+        },
+        .blockKindIdCount = 2,
     },
     [PinKindNone] = {
         .blockKindIdCount = 0,
@@ -236,7 +245,7 @@ void BlockKindsInit(void)
         .defaultChildrenCount = 2,
         .save = SaverSaveIf,
     });
-    BlockKinds[BlockKindIdAssignment] = BlockKindNew((BlockKind){
+    BlockKinds[BlockKindIdAssign] = BlockKindNew((BlockKind){
         .pinKind = PinKindStatement,
         .searchText = "=",
         .text = "=",
@@ -247,7 +256,7 @@ void BlockKindsInit(void)
                 NewChildPin(PinKindExpression),
             },
         .defaultChildrenCount = 2,
-        .save = SaverSaveAssignment,
+        .save = SaverSaveAssign,
     });
     BlockKinds[BlockKindIdNot] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
@@ -564,6 +573,28 @@ void BlockKindsInit(void)
             },
         .defaultChildrenCount = 2,
         .save = SaverSaveWhileLoop,
+    });
+    BlockKinds[BlockKindIdReturn] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "return",
+        .text = "return",
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindExpression),
+            },
+        .defaultChildrenCount = 1,
+        .save = SaverSaveReturn,
+    });
+    BlockKinds[BlockKindIdLocal] = BlockKindNew((BlockKind){
+        .pinKind = PinKindStatement,
+        .searchText = "local",
+        .text = "local",
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindAccessModifiable),
+            },
+        .defaultChildrenCount = 1,
+        .save = SaverSaveLocal,
     });
     BlockKinds[BlockKindIdTable] = BlockKindNew((BlockKind){
         .pinKind = PinKindExpression,
