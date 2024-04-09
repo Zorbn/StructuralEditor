@@ -283,8 +283,8 @@ Block *ParserParseAssign(Parser *parser, Block  *parent, int32_t childI)
 {
     Block *assign = BlockNew(BlockKindIdAssign, parent, childI);
 
-    BlockReplaceChild(assign, ParserParseExpression(parser, parent, childI), 0, true);
-    BlockReplaceChild(assign, ParserParseExpression(parser, assign, 1), 1, true);
+    BlockReplaceChild(assign, ParserParseMultiExpression(parser, parent, childI), 0, true);
+    BlockReplaceChild(assign, ParserParseMultiExpression(parser, assign, 1), 1, true);
 
     return assign;
 }
@@ -608,6 +608,31 @@ Block *ParserParseExpression(Parser *parser, Block *parent, int32_t childI)
     return ParserParseOr(parser, parent, childI);
 }
 
+Block *ParserParseMultiExpression(Parser *parser, Block *parent, int32_t childI)
+{
+    Block *expression = ParserParseExpression(parser, parent, childI);
+
+    if (!ParserHas(parser, ","))
+    {
+        return expression;
+    }
+
+    Block *expressionList = BlockNew(BlockKindIdExpressionList, parent, childI);
+
+    BlockReplaceChild(expressionList, expression, 0, true);
+
+    int32_t i = 1;
+    while (ParserHas(parser, ","))
+    {
+        LexerNext(&parser->lexer);
+
+        BlockReplaceChild(expressionList, ParserParseExpression(parser, expressionList, i), i, true);
+        i += 1;
+    }
+
+    return expressionList;
+}
+
 Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
 {
     Token start = LexerPeek(&parser->lexer);
@@ -641,17 +666,17 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
         return ParserParseLocal(parser, parent, childI);
     }
 
-    Block *expression = ParserParseExpression(parser, parent, childI);
+    Block *expression = ParserParseMultiExpression(parser, parent, childI);
 
-    if (!ParserHas(parser, "="))
+    if (!ParserHas(parser, "=") && expression->kindId != BlockKindIdExpressionList)
     {
         return expression;
     }
 
-    LexerNext(&parser->lexer);
+    ParserMatch(parser, "=");
 
     Block *assign = BlockNew(BlockKindIdAssign, parent, childI);
-    Block *rightExpression = ParserParseExpression(parser, assign, 1);
+    Block *rightExpression = ParserParseMultiExpression(parser, assign, 1);
     BlockReplaceChild(assign, expression, 0, true);
     BlockReplaceChild(assign, rightExpression, 1, true);
 

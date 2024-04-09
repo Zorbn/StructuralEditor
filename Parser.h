@@ -56,5 +56,6 @@ Block *ParserParseTableExpressionValuePair(Parser *parser, Block *parent, int32_
 Block *ParserParseTableValue(Parser *parser, Block *parent, int32_t childI);
 
 Block *ParserParseExpression(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseMultiExpression(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseIdentifier(Parser *parser, Block *parent, int32_t childI);
