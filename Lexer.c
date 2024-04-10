@@ -1,7 +1,7 @@
 #include "Lexer.h"
 
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 
 Lexer LexerNew(char *data, int32_t dataCount)
 {
@@ -60,11 +60,13 @@ Token LexerRead(Lexer *lexer)
     if (isalpha(LexerChar(lexer)))
     {
         // This is an identifier.
-        // TODO: Identifiers should not contain ., :, etc. I'm just doing this right now as a quick hack. Those should be blocks, ie: (. a b c d) == a.b.c.d
+        // TODO: Identifiers should not contain ., :, [, ], etc. I'm just doing this right now as a quick hack. Those should
+        // be blocks, ie: (. a b c d) == a.b.c.d
 
         int32_t start = lexer->position;
 
-        while (isalnum(LexerChar(lexer)) || LexerChar(lexer) == '_' || LexerChar(lexer) == '.' || LexerChar(lexer) == ':')
+        while (isalnum(LexerChar(lexer)) || LexerChar(lexer) == '_' || LexerChar(lexer) == '.' ||
+               LexerChar(lexer) == ':' || LexerChar(lexer) == '[' || LexerChar(lexer) == ']')
         {
             lexer->position += 1;
         }
@@ -126,8 +128,8 @@ Token LexerRead(Lexer *lexer)
     if (LexerChar(lexer) == '.' && LexerPeekChar(lexer) == '.')
     {
         Token token = (Token){
-        .start = lexer->position,
-        .end = lexer->position + 2,
+            .start = lexer->position,
+            .end = lexer->position + 2,
         };
         lexer->position += 2;
 
@@ -138,18 +140,18 @@ Token LexerRead(Lexer *lexer)
     {
         switch (LexerChar(lexer))
         {
-            case '<':
-            case '>':
-            case '=':
-            case '~': {
-                Token token = (Token){
+        case '<':
+        case '>':
+        case '=':
+        case '~': {
+            Token token = (Token){
                 .start = lexer->position,
                 .end = lexer->position + 2,
-                };
-                lexer->position += 2;
+            };
+            lexer->position += 2;
 
-                return token;
-            }
+            return token;
+        }
         }
     }
 
@@ -179,7 +181,7 @@ Token LexerRead(Lexer *lexer)
     return token;
 }
 
-bool LexerTokenEquals(Lexer* lexer, Token token, char *string, bool isPrefix)
+bool LexerTokenEquals(Lexer *lexer, Token token, char *string, bool isPrefix)
 {
     for (int32_t i = token.start; i < token.end; i++)
     {
