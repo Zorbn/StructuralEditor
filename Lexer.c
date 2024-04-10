@@ -162,7 +162,7 @@ Token LexerRead(Lexer *lexer)
             lexer->position += 1;
         }
 
-        int32_t end = lexer->position - 1;
+        int32_t end = lexer->position;
 
         return (Token){
             .start = start,

@@ -688,7 +688,6 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
     }
     else if (LexerTokenEquals(&parser->lexer, start, "--", true))
     {
-        puts("--");
         return ParserParseComment(parser, parent, childI);
     }
 

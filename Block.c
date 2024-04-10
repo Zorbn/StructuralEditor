@@ -80,7 +80,7 @@ const PinKindValidBlockSet PinKindValidBlocks[] = {
             BlockKindIdReturn,
             BlockKindIdLocal,
         },
-        .blockKindIdCount = 10,
+        .blockKindIdCount = 11,
     },
     [PinKindIdentifier] = {
         .blockKindIds = (BlockKindId[]){
