@@ -199,6 +199,12 @@ void SaverSaveAssign(Saver *saver, Block *block)
     SaverSave(saver, BlockGetChild(block, 1));
 }
 
+void SaverSaveComment(Saver *saver, Block *block)
+{
+    WriterWrite(&saver->writer, "-- ");
+    SaverSave(saver, BlockGetChild(block, 0));
+}
+
 void SaverSaveNot(Saver *saver, Block *block)
 {
     WriterWrite(&saver->writer, "not ");

@@ -29,6 +29,7 @@ Block *ParserParseWhileLoop(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseReturn(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseLocal(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseAssign(Parser *parser, Block *parent, int32_t childI);
+Block *ParserParseComment(Parser *parser, Block  *parent, int32_t childI);
 Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseFunction(Parser *parser, Block *parent, int32_t childI);
 Block *ParserParseLambdaFunctionHeader(Parser *parser, Block *parent, int32_t childI);

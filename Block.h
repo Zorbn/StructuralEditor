@@ -35,6 +35,7 @@ typedef enum BlockKindId
     BlockKindIdIf,
     BlockKindIdExpressionList,
     BlockKindIdAssign,
+    BlockKindIdComment,
     BlockKindIdNot,
     BlockKindIdLength,
     BlockKindIdConcatenate,

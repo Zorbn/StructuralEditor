@@ -26,16 +26,6 @@ static DefaultChildKind NewChildPin(PinKind childPinKind)
     };
 }
 
-// static PinKind DefaultChildKindGetPinKind(DefaultChildKind *defaultChildKind)
-// {
-//     if (defaultChildKind->isPin)
-//     {
-//         return defaultChildKind->pinKind;
-//     }
-
-//     return BlockKinds[defaultChildKind->blockKindId].pinKind;
-// }
-
 BlockKind BlockKindNew(BlockKind blockKind)
 {
     DefaultChildKind *defaultChildren = malloc(sizeof(DefaultChildKind) * blockKind.defaultChildrenCount);
@@ -79,6 +69,7 @@ const PinKindValidBlockSet PinKindValidBlocks[] = {
     [PinKindStatement] = {
         .blockKindIds = (BlockKindId[]){
             BlockKindIdAssign,
+            BlockKindIdComment,
             BlockKindIdDo,
             BlockKindIdFunction,
             BlockKindIdIf,
@@ -265,6 +256,16 @@ void BlockKindsInit(void)
             },
         .defaultChildrenCount = 2,
         .save = SaverSaveAssign,
+    });
+    BlockKinds[BlockKindIdComment] = BlockKindNew((BlockKind){
+        .searchText = "--",
+        .text = "--",
+        .defaultChildren =
+            (DefaultChildKind[]){
+                NewChildPin(PinKindIdentifier),
+            },
+        .defaultChildrenCount = 1,
+        .save = SaverSaveComment,
     });
     BlockKinds[BlockKindIdNot] = BlockKindNew((BlockKind){
         .searchText = "not",

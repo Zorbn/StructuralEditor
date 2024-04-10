@@ -30,6 +30,8 @@
  * Support multiple files,
  * Redo,
  * Undo limit,
+ * Rename "identifier" to "textbox" or similar. Make what text can be in a text box depend on it's parent. When moving text boxes around consider sanitizing their contents.
+ *  - eg. in a string/comment block you can create a text box like "hellow12312%^$%^@#" but outside of those (like in a function name) that string could only be "hellow12312"
  *
  * TODO, Ideas:
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
@@ -41,6 +43,7 @@
  *
  * TODO, Lua constructs, including:
  * Single/Multi-line comments,
+ * [[]] strings,
  */
 
 static const float DefaultFontSize = 16;

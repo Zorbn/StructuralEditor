@@ -26,6 +26,7 @@ void SaverSaveIfCases(Saver *saver, Block *block);
 void SaverSaveElseCase(Saver *saver, Block *block);
 void SaverSaveIf(Saver *saver, Block *block);
 void SaverSaveAssign(Saver *saver, Block *block);
+void SaverSaveComment(Saver *saver, Block *block);
 void SaverSaveExpressionList(Saver *saver, Block *block);
 void SaverSaveNot(Saver *saver, Block *block);
 void SaverSaveLength(Saver *saver, Block *block);

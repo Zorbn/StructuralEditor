@@ -84,7 +84,7 @@ Token LexerRead(Lexer *lexer)
         int32_t start = lexer->position;
         lexer->position += 1;
 
-        while (LexerChar(lexer) != '"')
+        while (LexerChar(lexer) != '"' && LexerChar(lexer) != '\0')
         {
             lexer->position += 1;
         }
@@ -153,6 +153,23 @@ Token LexerRead(Lexer *lexer)
         }
     }
 
+    if (LexerChar(lexer) == '-' && LexerPeekChar(lexer) == '-')
+    {
+        int32_t start = lexer->position;
+
+        while (LexerChar(lexer) != '\r' && LexerChar(lexer) != '\n' && LexerChar(lexer) != '\0')
+        {
+            lexer->position += 1;
+        }
+
+        int32_t end = lexer->position - 1;
+
+        return (Token){
+            .start = start,
+            .end = end,
+        };
+    }
+
     Token token = (Token){
         .start = lexer->position,
         .end = lexer->position + 1,
@@ -162,11 +179,16 @@ Token LexerRead(Lexer *lexer)
     return token;
 }
 
-bool LexerTokenEquals(Lexer* lexer, Token token, char *string)
+bool LexerTokenEquals(Lexer* lexer, Token token, char *string, bool isPrefix)
 {
     for (int32_t i = token.start; i < token.end; i++)
     {
         int32_t stringI = i - token.start;
+
+        if (string[stringI] == '\0')
+        {
+            return isPrefix;
+        }
 
         if (string[stringI] != lexer->data[i])
         {
@@ -174,5 +196,5 @@ bool LexerTokenEquals(Lexer* lexer, Token token, char *string)
         }
     }
 
-    return string[token.end - token.start] == '\0';
+    return isPrefix || string[token.end - token.start] == '\0';
 }

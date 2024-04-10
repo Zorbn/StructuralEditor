@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 Parser ParserNew(Lexer lexer, Font *font)
 {
@@ -23,7 +24,7 @@ void ParserMatch(Parser *parser, char *string)
 {
     Token next = LexerNext(&parser->lexer);
 
-    if (!LexerTokenEquals(&parser->lexer, next, string))
+    if (!LexerTokenEquals(&parser->lexer, next, string, false))
     {
         fprintf(stderr, "Expected \"%s\" but got: ", string);
 
@@ -41,7 +42,7 @@ void ParserMatch(Parser *parser, char *string)
 
 bool ParserHas(Parser *parser, char *string)
 {
-    return LexerTokenEquals(&parser->lexer, parser->lexer.current, string);
+    return LexerTokenEquals(&parser->lexer, parser->lexer.current, string, false);
 }
 
 void ParserList(Parser *parser, Block *parent, Block *(*ParserFunction)(Parser *parser, Block *parent, int32_t childI),
@@ -288,6 +289,25 @@ Block *ParserParseAssign(Parser *parser, Block  *parent, int32_t childI)
     BlockReplaceChild(assign, ParserParseMultiExpression(parser, assign, 1), 1, true);
 
     return assign;
+}
+
+Block *ParserParseComment(Parser *parser, Block  *parent, int32_t childI)
+{
+    Block *comment = BlockNew(BlockKindIdComment, parent, childI);
+
+    Token token = LexerNext(&parser->lexer);
+
+    int32_t startI = token.start + 2;
+    while (isspace(parser->lexer.data[startI]))
+    {
+        startI += 1;
+    }
+
+    int32_t textLength = token.end - startI;
+
+    BlockReplaceChild(comment, BlockNewIdentifier(parser->lexer.data + startI, textLength, parser->font, comment, 0), 0, true);
+
+    return comment;
 }
 
 Block *ParserParseFunctionHeader(Parser *parser, Block *parent, int32_t childI)
@@ -638,33 +658,38 @@ Block *ParserParseStatement(Parser *parser, Block *parent, int32_t childI)
 {
     Token start = LexerPeek(&parser->lexer);
 
-    if (LexerTokenEquals(&parser->lexer, start, "do"))
+    if (LexerTokenEquals(&parser->lexer, start, "do", false))
     {
         return ParserParseDo(parser, parent, childI);
     }
-    else if (LexerTokenEquals(&parser->lexer, start, "if"))
+    else if (LexerTokenEquals(&parser->lexer, start, "if", false))
     {
         return ParserParseIf(parser, parent, childI);
     }
-    else if (LexerTokenEquals(&parser->lexer, start, "function"))
+    else if (LexerTokenEquals(&parser->lexer, start, "function", false))
     {
         return ParserParseFunction(parser, parent, childI);
     }
-    else if (LexerTokenEquals(&parser->lexer, start, "for"))
+    else if (LexerTokenEquals(&parser->lexer, start, "for", false))
     {
         return ParserParseForLoop(parser, parent, childI);
     }
-    else if (LexerTokenEquals(&parser->lexer, start, "while"))
+    else if (LexerTokenEquals(&parser->lexer, start, "while", false))
     {
         return ParserParseWhileLoop(parser, parent, childI);
     }
-    else if (LexerTokenEquals(&parser->lexer, start, "return"))
+    else if (LexerTokenEquals(&parser->lexer, start, "return", false))
     {
         return ParserParseReturn(parser, parent, childI);
     }
-    else if (LexerTokenEquals(&parser->lexer, start, "local"))
+    else if (LexerTokenEquals(&parser->lexer, start, "local", false))
     {
         return ParserParseLocal(parser, parent, childI);
+    }
+    else if (LexerTokenEquals(&parser->lexer, start, "--", true))
+    {
+        puts("--");
+        return ParserParseComment(parser, parent, childI);
     }
 
     Block *expression = ParserParseMultiExpression(parser, parent, childI);

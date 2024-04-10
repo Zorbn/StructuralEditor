@@ -23,4 +23,4 @@ char LexerPeekChar(const Lexer *lexer);
 Token LexerPeek(const Lexer *lexer);
 Token LexerNext(Lexer *lexer);
 Token LexerRead(Lexer *lexer);
-bool LexerTokenEquals(Lexer *lexer, Token token, char *string);
+bool LexerTokenEquals(Lexer *lexer, Token token, char *string, bool isPrefix);
