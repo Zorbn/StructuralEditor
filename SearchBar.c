@@ -80,8 +80,7 @@ SearchBarState SearchBarUpdate(SearchBar *searchBar, Input *input)
     bool isConfirming = InputIsButtonPressed(input, GLFW_KEY_ENTER);
     bool isControlHeld =
         InputIsButtonHeld(input, GLFW_KEY_LEFT_CONTROL) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_CONTROL);
-    bool isShiftHeld =
-        InputIsButtonHeld(input, GLFW_KEY_LEFT_SHIFT) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_SHIFT);
+    bool isShiftHeld = InputIsButtonHeld(input, GLFW_KEY_LEFT_SHIFT) || InputIsButtonHeld(input, GLFW_KEY_RIGHT_SHIFT);
 
     bool wasUpdated = false;
 
@@ -167,7 +166,8 @@ void SearchBarClearSearchResults(SearchBar *searchBar)
     searchBar->selectedI = 0;
 }
 
-static void SearchBarGetResultSize(char *text, Camera *camera, Font *font, Rectangle *background, float *textX, float *textY)
+static void SearchBarGetResultSize(
+    char *text, Camera *camera, Font *font, Rectangle *background, float *textX, float *textY)
 {
     int32_t iWidth = 0;
     int32_t iHeight = 0;
@@ -179,20 +179,20 @@ static void SearchBarGetResultSize(char *text, Camera *camera, Font *font, Recta
     float descent = (float)iDescent / camera->zoom;
 
     *background = (Rectangle){
-        .x = -width - BlockPadding,
-        .y = (float)-BlockPadding,
-        .width = width + BlockPadding * 2,
-        .height = height + BlockPadding * 2,
+        .x = -width - BlockPaddingX,
+        .y = (float)-BlockPaddingY,
+        .width = width + BlockPaddingX * 2,
+        .height = height + BlockPaddingY * 2,
     };
 
     if (textX)
     {
-        *textX = background->x + BlockPadding;
+        *textX = background->x + BlockPaddingX;
     }
 
     if (textY)
     {
-        *textY = background->y + descent + BlockPadding;
+        *textY = background->y + descent + BlockPaddingY;
     }
 }
 
@@ -216,14 +216,14 @@ static void SearchBarGetSize(SearchBar *searchBar, Camera *camera, Font *font, R
         SearchBarGetResultSize(result, camera, font, background, NULL, NULL);
 
         width = MathFloatMax(width, background->width);
-        height += BlockPadding + background->height;
+        height += BlockPaddingY + background->height;
     }
 
     *background = (Rectangle){
-        .x = x - BlockPadding,
-        .y = y - BlockPadding,
-        .width = width + BlockPadding * 2,
-        .height = height + BlockPadding * 2,
+        .x = x - BlockPaddingX,
+        .y = y - BlockPaddingY,
+        .width = width + BlockPaddingX * 2,
+        .height = height + BlockPaddingY * 2,
     };
 }
 
@@ -267,13 +267,13 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
 
     float y = background.y;
 
-    y += background.height + BlockPadding;
+    y += background.height + BlockPaddingY;
 
     for (int32_t i = 0; i < searchBar->results.count; i++)
     {
         char *result = searchBar->results.data[i];
 
-        y += BlockPadding;
+        y += BlockPaddingY;
 
         Rectangle resultBackground = {0};
         float resultTextY = 0;
@@ -284,8 +284,8 @@ void SearchBarDraw(SearchBar *searchBar, Camera *camera, Font *font, Theme *them
         if (searchBar->selectedI - 1 == i)
         {
             ColorSet(theme->cursorColor);
-            DrawRect(background.x - LineWidth, resultBackground.y - LineWidth, resultBackground.width + LineWidth * 2.0f,
-                resultBackground.height + LineWidth * 2.0f, camera->zoom);
+            DrawRect(background.x - LineWidth, resultBackground.y - LineWidth,
+                resultBackground.width + LineWidth * 2.0f, resultBackground.height + LineWidth * 2.0f, camera->zoom);
         }
 
         ColorSet(theme->oddColor);
