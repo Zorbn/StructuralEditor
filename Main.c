@@ -10,14 +10,14 @@
 #include "GLFW/glfw3.h"
 
 #include "Block.h"
+#include "Camera.h"
 #include "Cursor.h"
 #include "Font.h"
 #include "Input.h"
-#include "Parser.h"
-#include "Theme.h"
-#include "Camera.h"
 #include "Math.h"
+#include "Parser.h"
 #include "Shapes.h"
+#include "Theme.h"
 
 #include <assert.h>
 #include <stdio.h>
@@ -30,8 +30,10 @@
  * Support multiple files,
  * Redo,
  * Undo limit,
- * Rename "identifier" to "textbox" or similar. Make what text can be in a text box depend on it's parent. When moving text boxes around consider sanitizing their contents.
- *  - eg. in a string/comment block you can create a text box like "hellow12312%^$%^@#" but outside of those (like in a function name) that string could only be "hellow12312"
+ * Rename "identifier" to "textbox" or similar. Make what text can be in a text box depend on it's parent. When moving
+ * text boxes around consider sanitizing their contents.
+ *  - eg. in a string/comment block you can create a text box like "hellow12312%^$%^@#" but outside of those (like in a
+ * function name) that string could only be "hellow12312"
  *
  * TODO, Ideas:
  * Search for patterns structurally, eg. search for a fn with the name "hello world" and a third argument named "c",
@@ -271,7 +273,8 @@ int main(int argumentCount, char **arguments)
         sgp_clear();
 
         ColorSet(theme.borderColor);
-        DrawRectBordered((float)rootBlock->x - BlockPadding, (float)rootBlock->y - BlockPadding, (float)rootBlock->width, (float)rootBlock->height, camera.zoom, BorderWidth);
+        DrawRectBordered((float)rootBlock->x - BlockPaddingX, (float)rootBlock->y - BlockPaddingY,
+            (float)rootBlock->width, (float)rootBlock->height, camera.zoom, BorderWidth);
         BlockDraw(rootBlock, cursor.block, 0, &camera, font, &theme, 0, 0);
         CursorDraw(&cursor, &camera, font, &theme, deltaTime);
 

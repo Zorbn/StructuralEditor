@@ -15,6 +15,8 @@ typedef struct Theme
     Color pinColor;
 } Theme;
 
-extern const int32_t BlockPadding;
+extern const int32_t FontAscent;
+extern const int32_t BlockPaddingX;
+extern const int32_t BlockPaddingY;
 extern const float LineWidth;
 extern const float BorderWidth;
