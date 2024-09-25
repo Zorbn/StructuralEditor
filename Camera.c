@@ -1,7 +1,7 @@
 #include "Camera.h"
+#include "Math.h"
 #include "Block.h"
 #include "Cursor.h"
-#include "Math.h"
 
 const float PanSpeed = 10.0f;
 const float ZoomIncrement = 0.25f;
@@ -26,7 +26,7 @@ void CameraUpdate(Camera *camera, Cursor *cursor, Block *rootBlock, float deltaT
     float width = camera->width / camera->zoom;
     float height = camera->height / camera->zoom;
 
-    float targetX = -BlockPaddingX * 2.0f;
+    float targetX = -BlockPadding * 2.0f;
     targetX = MathFloatMin(targetX, rootBlock->x + rootBlock->width * 0.5f - width * 0.5f);
 
     int32_t cursorBlockGlobalX = 0;

@@ -554,8 +554,7 @@ static bool CursorIteratePinKindValidBlocks(Cursor *cursor, PinKind pinKind, Blo
     return false;
 }
 
-static bool CursorAddSearchResults(
-    Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI)
+static bool CursorAddSearchResults(Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI)
 {
     (void)kindId, (void)parent, (void)childI;
 
@@ -564,8 +563,7 @@ static bool CursorAddSearchResults(
     return false;
 }
 
-static bool CursorFindMatchingResult(
-    Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI)
+static bool CursorFindMatchingResult(Cursor *cursor, BlockKindId kindId, const BlockKind *kind, Block *parent, int32_t childI)
 {
     if (!ListMatchesString(&cursor->searchBar.text, kind->searchText))
     {
@@ -610,8 +608,7 @@ static void CursorUpdateInsert(Cursor *cursor, Input *input, Font *font)
             return;
         }
 
-        if (CursorIteratePinKindValidBlocks(
-                cursor, defaultChildKind->pinKind, parent, childI, CursorFindMatchingResult))
+        if (CursorIteratePinKindValidBlocks(cursor, defaultChildKind->pinKind, parent, childI, CursorFindMatchingResult))
         {
             return;
         }
@@ -668,8 +665,8 @@ void CursorDraw(Cursor *cursor, Camera *camera, Font *font, Theme *theme, float 
 
     BlockGetGlobalPosition(block, &blockGlobalX, &blockGlobalY);
 
-    float targetX = blockGlobalX - BlockPaddingX - LineWidth;
-    float targetY = blockGlobalY - BlockPaddingY - LineWidth;
+    float targetX = blockGlobalX - BlockPadding - LineWidth;
+    float targetY = blockGlobalY - BlockPadding - LineWidth;
     float targetWidth = block->width + LineWidth * 2;
     float targetHeight = block->height + LineWidth * 2;
 

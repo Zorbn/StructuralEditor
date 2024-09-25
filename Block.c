@@ -41,91 +41,78 @@ BlockKind BlockKindNew(BlockKind blockKind)
 }
 
 const PinKindValidBlockSet PinKindValidBlocks[] = {
-    [PinKindExpression] =
-        {
-            .blockKindIds =
-                (BlockKindId[]){
-                    BlockKindIdLambdaFunction,
-                    BlockKindIdNot,
-                    BlockKindIdLength,
-                    BlockKindIdConcatenate,
-                    BlockKindIdModulo,
-                    BlockKindIdDivide,
-                    BlockKindIdMultiply,
-                    BlockKindIdSubtract,
-                    BlockKindIdAdd,
-                    BlockKindIdGreaterEqual,
-                    BlockKindIdLessEqual,
-                    BlockKindIdGreater,
-                    BlockKindIdLess,
-                    BlockKindIdNotEqual,
-                    BlockKindIdEqual,
-                    BlockKindIdAnd,
-                    BlockKindIdOr,
-                    BlockKindIdCall,
-                    BlockKindIdTable,
-                },
-            .blockKindIdCount = 19,
-            .extendsPinKind = PinKindIdentifier,
+    [PinKindExpression] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdLambdaFunction,
+            BlockKindIdNot,
+            BlockKindIdLength,
+            BlockKindIdConcatenate,
+            BlockKindIdModulo,
+            BlockKindIdDivide,
+            BlockKindIdMultiply,
+            BlockKindIdSubtract,
+            BlockKindIdAdd,
+            BlockKindIdGreaterEqual,
+            BlockKindIdLessEqual,
+            BlockKindIdGreater,
+            BlockKindIdLess,
+            BlockKindIdNotEqual,
+            BlockKindIdEqual,
+            BlockKindIdAnd,
+            BlockKindIdOr,
+            BlockKindIdCall,
+            BlockKindIdTable,
         },
-    [PinKindStatement] =
-        {
-            .blockKindIds =
-                (BlockKindId[]){
-                    BlockKindIdAssign,
-                    BlockKindIdComment,
-                    BlockKindIdDo,
-                    BlockKindIdFunction,
-                    BlockKindIdIf,
-                    BlockKindIdCall,
-                    BlockKindIdForLoop,
-                    BlockKindIdForInLoop,
-                    BlockKindIdWhileLoop,
-                    BlockKindIdReturn,
-                    BlockKindIdLocal,
-                },
-            .blockKindIdCount = 11,
+        .blockKindIdCount = 19,
+        .extendsPinKind = PinKindIdentifier,
+    },
+    [PinKindStatement] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdAssign,
+            BlockKindIdComment,
+            BlockKindIdDo,
+            BlockKindIdFunction,
+            BlockKindIdIf,
+            BlockKindIdCall,
+            BlockKindIdForLoop,
+            BlockKindIdForInLoop,
+            BlockKindIdWhileLoop,
+            BlockKindIdReturn,
+            BlockKindIdLocal,
         },
-    [PinKindIdentifier] =
-        {
-            .blockKindIds =
-                (BlockKindId[]){
-                    BlockKindIdIdentifier,
-                },
-            .blockKindIdCount = 1,
+        .blockKindIdCount = 11,
+    },
+    [PinKindIdentifier] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdIdentifier,
         },
-    [PinKindTableEntry] =
-        {
-            .blockKindIds =
-                (BlockKindId[]){
-                    BlockKindIdTableKeyValuePair,
-                    BlockKindIdTableExpressionValuePair,
-                    BlockKindIdTableValue,
-                },
-            .blockKindIdCount = 3,
+        .blockKindIdCount = 1,
+    },
+    [PinKindTableEntry] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdTableKeyValuePair,
+            BlockKindIdTableExpressionValuePair,
+            BlockKindIdTableValue,
         },
-    [PinKindAccessModifiable] =
-        {
-            .blockKindIds =
-                (BlockKindId[]){
-                    BlockKindIdAssign,
-                    BlockKindIdFunction,
-                },
-            .blockKindIdCount = 2,
+        .blockKindIdCount = 3,
+    },
+    [PinKindAccessModifiable] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdAssign,
+            BlockKindIdFunction,
         },
-    [PinKindMultiExpression] =
-        {
-            .blockKindIds =
-                (BlockKindId[]){
-                    BlockKindIdExpressionList,
-                },
-            .blockKindIdCount = 1,
-            .extendsPinKind = PinKindExpression,
+        .blockKindIdCount = 2,
+    },
+    [PinKindMultiExpression] = {
+        .blockKindIds = (BlockKindId[]){
+            BlockKindIdExpressionList,
         },
-    [PinKindNone] =
-        {
-            .blockKindIdCount = 0,
-        },
+        .blockKindIdCount = 1,
+        .extendsPinKind = PinKindExpression,
+    },
+    [PinKindNone] = {
+        .blockKindIdCount = 0,
+    },
 };
 
 BlockKind BlockKinds[BlockKindIdCount];
@@ -699,8 +686,7 @@ Block *BlockNew(BlockKindId kindId, Block *parent, int32_t childI)
         }
         else
         {
-            ListPush_BlockPointer(
-                &block->data.parent.children, BlockNew(kind->defaultChildren[i].blockKindId, block, i));
+            ListPush_BlockPointer(&block->data.parent.children, BlockNew(kind->defaultChildren[i].blockKindId, block, i));
         }
     }
 
@@ -898,8 +884,7 @@ static bool BlockCanSwapInto(Block *block, DefaultChildKind *destinationDefaultC
         return block->kindId == destinationDefaultChildKind->blockKindId;
     }
 
-    return block->kindId == BlockKindIdPin ||
-           BlockCanPinKindContainBlockKind(block->kindId, destinationDefaultChildKind->pinKind);
+    return block->kindId == BlockKindIdPin || BlockCanPinKindContainBlockKind(block->kindId, destinationDefaultChildKind->pinKind);
 }
 
 bool BlockCanSwapWith(Block *block, Block *other)
@@ -1062,11 +1047,11 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
     int32_t localX = 0;
     int32_t localY = 0;
 
-    localX += BlockSpacing;
+    localX += BlockPadding;
 
     if (childrenCount > 0)
     {
-        localY += BlockPaddingY;
+        localY += BlockPadding;
     }
     else
     {
@@ -1081,7 +1066,7 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 
         if (textWidth != 0)
         {
-            localX += BlockSpacing;
+            localX += BlockPadding;
         }
     }
 
@@ -1094,12 +1079,10 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
         {
             Block *child = BlockGetChild(block, i);
 
-            localX += BlockIndent;
-
             BlockUpdateTree(child, localX, localY);
 
-            localX += child->width + BlockSpacing;
-            localY += child->height + BlockSpacing;
+            localX += child->width + BlockPadding;
+            localY += child->height + BlockPadding;
 
             maxWidth = MathInt32Max(maxWidth, localX);
             localX = startX;
@@ -1115,14 +1098,14 @@ void BlockUpdateTree(Block *block, int32_t x, int32_t y)
 
             BlockUpdateTree(child, localX, localY);
 
-            localX += child->width + BlockSpacing;
+            localX += child->width + BlockPadding;
 
             if (i < childrenCount - 1 && kind->isTextInfix)
             {
-                localX += textWidth + BlockSpacing;
+                localX += textWidth + BlockPadding;
             }
 
-            maxHeight = MathInt32Max(maxHeight, child->height + BlockSpacing);
+            maxHeight = MathInt32Max(maxHeight, child->height + BlockPadding);
         }
 
         maxWidth = MathInt32Max(maxWidth, localX);
@@ -1172,8 +1155,7 @@ static int32_t BlockFindFirstVisibleChildI(Block *block, int32_t childrenCount, 
     return minI;
 }
 
-void BlockDraw(
-    Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme, int32_t x, int32_t y)
+void BlockDraw(Block *block, Block *cursorBlock, int32_t depth, Camera *camera, Font *font, Theme *theme, int32_t x, int32_t y)
 {
     x += block->x;
     y += block->y;
@@ -1187,18 +1169,17 @@ void BlockDraw(
         ColorSet(BlockGetDepthColor(depth, theme));
     }
 
-    // DrawRect(
-    //     (float)x - BlockPaddingX, (float)y - BlockPaddingY, (float)block->width, (float)block->height, camera->zoom);
+    DrawRect((float)x - BlockPadding, (float)y - BlockPadding, (float)block->width, (float)block->height, camera->zoom);
 
     ColorSet(theme->textColor);
 
-    int32_t textY = y - BlockPaddingY / 2;
+    int32_t textY = y - BlockPadding / 2;
     int32_t childrenCount = BlockGetChildrenCount(block);
     bool hasChildren = childrenCount > 0;
 
     if (!hasChildren)
     {
-        textY -= BlockPaddingY;
+        textY -= BlockPadding;
     }
 
     const BlockKind *kind = &BlockKinds[block->kindId];
